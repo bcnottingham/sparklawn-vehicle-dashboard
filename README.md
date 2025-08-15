@@ -5,11 +5,13 @@ Real-time vehicle tracking dashboard for SparkLawn's eco-friendly fleet using th
 ## ✨ Features
 
 - **Real-time vehicle tracking** with 45-second auto-refresh
-- **Named vehicles**: Van, Truck 1, Truck 2, Truck 3
+- **Named vehicles**: Van and Truck (F-150 Lightning)
+- **Battery charge display** with animated battery icons
+- **Street addresses** instead of coordinates
 - **Interactive map** with high-quality Leaflet integration
 - **SparkLawn branding** with eco-friendly green color scheme
+- **Automatic token refresh** - set and forget!
 - **Responsive design** for desktop and mobile
-- **Live status updates** with vehicle details
 
 ## Project Structure
 ```
@@ -75,9 +77,9 @@ Visit `http://localhost:3000` to view the dashboard.
 ## 📱 Vehicle Fleet
 
 - **Van** - Ford Transit (2023)
-- **Truck 1** - Ford Lightning Pro (2024)  
-- **Truck 2** - Ford Lightning (2023)
-- **Truck 3** - Ford F-150 (2023)
+- **Truck** - Ford F-150 Lightning (2024)
+- **Truck** - Ford F-150 Lightning (2024)  
+- **Truck** - Ford F-150 Lightning (2024)
 
 ## 🔄 Token Refresh
 

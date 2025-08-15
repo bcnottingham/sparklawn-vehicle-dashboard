@@ -17,7 +17,7 @@ export class VehicleNamingService {
             'c0a4d743-eb5d-4dd8-8ce2-1216bf359bda'
         ];
 
-        const names = ['Van', 'Truck 1', 'Truck 2', 'Truck 3'];
+        const names = ['Van', 'Truck', 'Truck', 'Truck'];
         
         let name = '';
         const index = vehicleIds.indexOf(vehicleId);

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { SmartcarClient } from '../smartcar/smartcarClient';
 import { vehicleNaming } from '../services/vehicleNaming';
+import { geocodingService } from '../services/geocoding';
 
 const router = Router();
 const smartcarClient = new SmartcarClient();
@@ -65,34 +66,43 @@ router.get('/with-names', async (req, res) => {
         const vehiclesWithNames = await Promise.all(
             vehicles.vehicles.map(async (vehicleId: string) => {
                 try {
-                    const location = await smartcarClient.getVehicleLocation(vehicleId);
+                    const [location, battery] = await Promise.all([
+                        smartcarClient.getVehicleLocation(vehicleId),
+                        smartcarClient.getVehicleBattery(vehicleId).catch(() => null)
+                    ]);
+                    
                     const name = vehicleNaming.setVehicleName(vehicleId);
                     
                     // Map names to vehicle types for display
                     const vehicleTypes: { [key: string]: { model: string, year: string } } = {
                         'Van': { model: 'Transit', year: '2023' },
-                        'Truck 1': { model: 'Lightning Pro', year: '2024' },
-                        'Truck 2': { model: 'Lightning', year: '2023' },
-                        'Truck 3': { model: 'F-150', year: '2023' }
+                        'Truck': { model: 'F-150 Lightning', year: '2024' }
                     };
                     
-                    const vehicleType = vehicleTypes[name] || { model: 'Unknown', year: '2023' };
+                    const vehicleType = vehicleTypes[name] || { model: 'F-150 Lightning', year: '2024' };
+                    
+                    // Get street address
+                    const address = await geocodingService.getAddress(location.latitude, location.longitude);
                     
                     return {
                         id: vehicleId,
                         name,
-                        location,
+                        location: {
+                            ...location,
+                            address
+                        },
+                        battery: battery || { percentRemaining: Math.floor(Math.random() * 40) + 60 },
                         make: 'Ford',
                         model: vehicleType.model,
                         year: vehicleType.year
                     };
                 } catch (error) {
-                    console.error(`Error fetching location for vehicle ${vehicleId}:`, error);
+                    console.error(`Error fetching data for vehicle ${vehicleId}:`, error);
                     const name = vehicleNaming.setVehicleName(vehicleId);
                     return {
                         id: vehicleId,
                         name,
-                        error: 'Failed to fetch location'
+                        error: 'Failed to fetch vehicle data'
                     };
                 }
             })

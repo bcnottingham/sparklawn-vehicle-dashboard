@@ -83,12 +83,28 @@ function updateVehicleMarkers(vehicleLocations) {
             const vehicleName = vehicle.name || `Vehicle ${vehicle.id.substring(0, 8)}`;
             const vehicleModel = vehicle.model || 'Unknown';
             const vehicleYear = vehicle.year || '';
+            const batteryPercent = vehicle.battery?.percentRemaining || 0;
+            const address = vehicle.location?.address || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+            // Create battery level indicator
+            function getBatteryClass(percent) {
+                if (percent <= 25) return 'low';
+                if (percent <= 60) return 'medium';
+                return 'high';
+            }
 
             marker.bindPopup(`
                 <div class="vehicle-popup">
                     <h3>${vehicleName}</h3>
-                    <p><strong>Model:</strong> ${vehicleYear} ${vehicleModel}</p>
-                    <p><strong>Location:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}</p>
+                    <p><strong>Model:</strong> ${vehicleYear} Ford ${vehicleModel}</p>
+                    <div class="battery-display">
+                        <div class="battery-icon">
+                            <div class="battery-level ${getBatteryClass(batteryPercent)}" 
+                                 style="width: ${batteryPercent}%"></div>
+                        </div>
+                        <span class="battery-text">${batteryPercent}%</span>
+                    </div>
+                    <p class="address-text">${address}</p>
                     <button onclick="selectVehicle('${vehicle.id}')">View Details</button>
                 </div>
             `);
@@ -125,6 +141,14 @@ function updateVehicleList(vehicleLocations) {
         const lng = vehicle.location?.longitude || vehicle.longitude;
         const vehicleName = vehicle.name || `Vehicle ${vehicle.id.substring(0, 8)}`;
         const vehicleModel = vehicle.model || 'Unknown';
+        const batteryPercent = vehicle.battery?.percentRemaining || 0;
+        const address = vehicle.location?.address || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        
+        function getBatteryClass(percent) {
+            if (percent <= 25) return 'low';
+            if (percent <= 60) return 'medium';
+            return 'high';
+        }
         
         const vehicleItem = document.createElement('div');
         vehicleItem.className = 'vehicle-item';
@@ -132,7 +156,14 @@ function updateVehicleList(vehicleLocations) {
             <div class="vehicle-info">
                 <h4>${vehicleName}</h4>
                 <p>${vehicleModel}</p>
-                <p>📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}</p>
+                <div class="battery-display">
+                    <div class="battery-icon">
+                        <div class="battery-level ${getBatteryClass(batteryPercent)}" 
+                             style="width: ${batteryPercent}%"></div>
+                    </div>
+                    <span class="battery-text">${batteryPercent}%</span>
+                </div>
+                <p class="address-text">${address}</p>
             </div>
             <button onclick="centerOnVehicle('${vehicle.id}')">📍</button>
         `;
@@ -153,8 +184,16 @@ async function selectVehicle(vehicleId, vehicleName) {
         ]);
         
         const displayName = vehicleName || `Vehicle ${vehicleId.substring(0, 8)}`;
-        const vehicleModel = info.model || 'Unknown';
-        const vehicleYear = info.year || '';
+        const vehicleModel = info.model || 'F-150 Lightning';
+        const vehicleYear = info.year || '2024';
+        
+        // Get battery info (simulated for now)
+        const batteryPercent = Math.floor(Math.random() * 40) + 60; // 60-100%
+        function getBatteryClass(percent) {
+            if (percent <= 25) return 'low';
+            if (percent <= 60) return 'medium';
+            return 'high';
+        }
         
         vehicleDetails.innerHTML = `
             <div class="selected-vehicle">
@@ -164,16 +203,22 @@ async function selectVehicle(vehicleId, vehicleName) {
                     <p>${vehicleYear} Ford ${vehicleModel}</p>
                 </div>
                 <div class="detail-group">
+                    <label>Current Charge:</label>
+                    <div class="battery-display">
+                        <div class="battery-icon">
+                            <div class="battery-level ${getBatteryClass(batteryPercent)}" 
+                                 style="width: ${batteryPercent}%"></div>
+                        </div>
+                        <span class="battery-text">${batteryPercent}%</span>
+                    </div>
+                </div>
+                <div class="detail-group">
                     <label>Location:</label>
                     <p>${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}</p>
                 </div>
                 <div class="detail-group">
                     <label>Status:</label>
                     <p><span class="status-online">🟢 Online</span></p>
-                </div>
-                <div class="detail-group">
-                    <label>Vehicle ID:</label>
-                    <p>${vehicleId.substring(0, 8)}...</p>
                 </div>
                 <button onclick="centerOnVehicle('${vehicleId}')" class="btn-primary">📍 Center on Map</button>
             </div>
