@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import vehiclesRouter from './routes/vehicles';
 import diagnosticsRouter from './routes/diagnostics';
 import { connectToDatabase } from './db/index';
+import { tokenManager } from './services/tokenManager';
 
 dotenv.config();
 
@@ -24,13 +25,39 @@ app.get('/', (req, res) => {
 app.use('/vehicles', vehiclesRouter);
 app.use('/diagnostics', diagnosticsRouter);
 
-// Start server without database for now
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚗 Ford Vehicle Dashboard running on:`);
-  console.log(`   Local:    http://localhost:${PORT}`);
-  console.log(`   Network:  http://0.0.0.0:${PORT}`);
-  console.log(`   Share this URL with your business partner!`);
+// Initialize token manager and start server
+async function startServer() {
+  try {
+    // Initialize automatic token management
+    await tokenManager.initialize();
+    
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🌱 SparkLawn Vehicle Dashboard running on:`);
+      console.log(`   Local:    http://localhost:${PORT}`);
+      console.log(`   Network:  http://0.0.0.0:${PORT}`);
+      console.log(`   🔄 Automatic token refresh: ENABLED`);
+      console.log(`   Share this URL with your business partner!`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\n🛑 Shutting down gracefully...');
+  await tokenManager.close();
+  process.exit(0);
 });
+
+process.on('SIGTERM', async () => {
+  console.log('\n🛑 Shutting down gracefully...');
+  await tokenManager.close();
+  process.exit(0);
+});
+
+startServer();
 
 // Database connection (disabled for testing)
 // connectToDatabase()

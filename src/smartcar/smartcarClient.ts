@@ -1,23 +1,26 @@
-export class SmartcarClient {
-    private clientId: string;
-    private clientSecret: string;
-    private accessToken: string | null = null;
+import { tokenManager } from '../services/tokenManager';
 
-    constructor() {
-        this.clientId = process.env.SMARTCAR_CLIENT_ID || '';
-        this.clientSecret = process.env.SMARTCAR_CLIENT_SECRET || '';
-        this.accessToken = process.env.SMARTCAR_ACCESS_TOKEN || null;
+export class SmartcarClient {
+    private async getAccessToken(): Promise<string | null> {
+        try {
+            const tokens = await tokenManager.getCurrentTokens();
+            return tokens?.accessToken || null;
+        } catch (error) {
+            console.error('Error getting access token:', error);
+            return null;
+        }
     }
 
     async getVehicles(): Promise<any> {
-        if (!this.accessToken) {
+        const accessToken = await this.getAccessToken();
+        if (!accessToken) {
             throw new Error('Access token not available');
         }
 
         const response = await fetch('https://api.smartcar.com/v2.0/vehicles', {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${this.accessToken}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -30,14 +33,15 @@ export class SmartcarClient {
     }
 
     async getVehicleLocation(vehicleId: string): Promise<any> {
-        if (!this.accessToken) {
+        const accessToken = await this.getAccessToken();
+        if (!accessToken) {
             throw new Error('Access token not available');
         }
 
         const response = await fetch(`https://api.smartcar.com/v2.0/vehicles/${vehicleId}/location`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${this.accessToken}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -59,14 +63,15 @@ export class SmartcarClient {
     }
 
     async getVehicleInfo(vehicleId: string): Promise<any> {
-        if (!this.accessToken) {
+        const accessToken = await this.getAccessToken();
+        if (!accessToken) {
             throw new Error('Access token not available');
         }
 
         const response = await fetch(`https://api.smartcar.com/v2.0/vehicles/${vehicleId}`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${this.accessToken}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -79,14 +84,15 @@ export class SmartcarClient {
     }
 
     async getVehicleDiagnostics(vehicleId: string): Promise<any> {
-        if (!this.accessToken) {
+        const accessToken = await this.getAccessToken();
+        if (!accessToken) {
             throw new Error('Access token not available');
         }
 
         const response = await fetch(`https://api.smartcar.com/v2.0/vehicles/${vehicleId}/engine/oil`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${this.accessToken}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
             }
         });
