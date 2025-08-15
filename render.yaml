@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: sparklawn-vehicle-dashboard
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node dist/server.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: SMARTCAR_CLIENT_ID
+        sync: false
+      - key: SMARTCAR_CLIENT_SECRET
+        sync: false
+      - key: SMARTCAR_ACCESS_TOKEN
+        sync: false
+      - key: SMARTCAR_REFRESH_TOKEN
+        sync: false
