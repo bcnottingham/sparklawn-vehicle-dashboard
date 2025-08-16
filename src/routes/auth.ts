@@ -156,10 +156,13 @@ router.get('/jobber/status', async (req, res) => {
         }
 
         const testQuery = `
-            query TestConnection {
-                account {
-                    id
-                    name
+            query {
+                clients(first: 1) {
+                    edges {
+                        node {
+                            id
+                        }
+                    }
                 }
             }
         `;
@@ -175,20 +178,31 @@ router.get('/jobber/status', async (req, res) => {
             })
         });
 
-        if (!response.ok) {
-            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-        }
-
         const data = await response.json();
+
+        if (!response.ok) {
+            // Return the actual error response for debugging
+            res.json({
+                connected: false,
+                error: `API request failed: ${response.status} ${response.statusText}`,
+                errorDetails: data,
+                message: 'Jobber API connection failed - check error details'
+            });
+            return;
+        }
         
         if (data.errors) {
             throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
         }
 
+        // Log the response for debugging
+        console.log('Jobber API response:', JSON.stringify(data, null, 2));
+
         res.json({
             connected: true,
             message: 'Jobber API connection successful',
-            account: data.data.account
+            clientsCount: data.data.clients.edges.length,
+            data: data.data
         });
     } catch (error) {
         res.json({
