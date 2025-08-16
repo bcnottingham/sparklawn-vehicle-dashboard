@@ -87,9 +87,10 @@ router.get('/with-names', async (req, res) => {
         const vehiclesWithNames = await Promise.all(
             vehicles.vehicles.map(async (vehicleId: string) => {
                 try {
-                    const [location, battery] = await Promise.all([
+                    const [location, battery, charge] = await Promise.all([
                         smartcarClient.getVehicleLocation(vehicleId),
-                        smartcarClient.getVehicleBattery(vehicleId).catch(() => null)
+                        smartcarClient.getVehicleBattery(vehicleId).catch(() => null),
+                        smartcarClient.getVehicleCharge(vehicleId).catch(() => null)
                     ]);
                     
                     const name = vehicleNaming.setVehicleName(vehicleId);
@@ -105,6 +106,10 @@ router.get('/with-names', async (req, res) => {
                     // Get street address
                     const address = await geocodingService.getAddress(location.latitude, location.longitude);
                     
+                    // Combine battery and charging data
+                    const batteryData = battery || { percentRemaining: Math.floor(Math.random() * 40) + 60 };
+                    const chargeData = charge || { isPluggedIn: false, state: 'NOT_CHARGING' };
+                    
                     return {
                         id: vehicleId,
                         name,
@@ -112,7 +117,11 @@ router.get('/with-names', async (req, res) => {
                             ...location,
                             address
                         },
-                        battery: battery || { percentRemaining: Math.floor(Math.random() * 40) + 60 },
+                        battery: {
+                            ...batteryData,
+                            isPluggedIn: chargeData.isPluggedIn || false,
+                            isCharging: chargeData.state === 'CHARGING' || chargeData.isPluggedIn
+                        },
                         make: 'Ford',
                         model: vehicleType.model,
                         year: vehicleType.year

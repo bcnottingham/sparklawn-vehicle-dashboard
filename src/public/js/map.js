@@ -84,6 +84,8 @@ function updateVehicleMarkers(vehicleLocations) {
             const vehicleModel = vehicle.model || 'Unknown';
             const vehicleYear = vehicle.year || '';
             const batteryPercent = vehicle.battery?.percentRemaining || 0;
+            const isCharging = vehicle.battery?.isCharging || false;
+            const isPluggedIn = vehicle.battery?.isPluggedIn || false;
             const address = vehicle.location?.address || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 
             // Create battery level indicator
@@ -91,6 +93,14 @@ function updateVehicleMarkers(vehicleLocations) {
                 if (percent <= 25) return 'low';
                 if (percent <= 60) return 'medium';
                 return 'high';
+            }
+
+            // Create charging status text
+            function getChargingStatus() {
+                if (isCharging || isPluggedIn) {
+                    return `<span class="charging-status">🔌 Charging</span>`;
+                }
+                return '';
             }
 
             marker.bindPopup(`
@@ -103,6 +113,7 @@ function updateVehicleMarkers(vehicleLocations) {
                                  style="width: ${batteryPercent}%"></div>
                         </div>
                         <span class="battery-text">${batteryPercent}%</span>
+                        ${getChargingStatus()}
                     </div>
                     <p class="address-text">${address}</p>
                     <button onclick="selectVehicle('${vehicle.id}')">View Details</button>
@@ -142,12 +153,21 @@ function updateVehicleList(vehicleLocations) {
         const vehicleName = vehicle.name || `Vehicle ${vehicle.id.substring(0, 8)}`;
         const vehicleModel = vehicle.model || 'Unknown';
         const batteryPercent = vehicle.battery?.percentRemaining || 0;
+        const isCharging = vehicle.battery?.isCharging || false;
+        const isPluggedIn = vehicle.battery?.isPluggedIn || false;
         const address = vehicle.location?.address || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
         
         function getBatteryClass(percent) {
             if (percent <= 25) return 'low';
             if (percent <= 60) return 'medium';
             return 'high';
+        }
+        
+        function getChargingStatus() {
+            if (isCharging || isPluggedIn) {
+                return `<span class="charging-status">🔌 Charging</span>`;
+            }
+            return '';
         }
         
         const vehicleItem = document.createElement('div');
@@ -210,6 +230,7 @@ async function selectVehicle(vehicleId, vehicleName) {
                                  style="width: ${batteryPercent}%"></div>
                         </div>
                         <span class="battery-text">${batteryPercent}%</span>
+                        ${getChargingStatus()}
                     </div>
                 </div>
                 <div class="detail-group">

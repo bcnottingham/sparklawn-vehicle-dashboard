@@ -134,7 +134,40 @@ export class SmartcarClient {
             // If battery endpoint fails, return mock data for electric vehicles
             return {
                 percentRemaining: Math.floor(Math.random() * 40) + 60, // 60-100%
-                range: Math.floor(Math.random() * 150) + 200 // 200-350 miles
+                range: Math.floor(Math.random() * 150) + 200, // 200-350 miles
+                isPluggedIn: Math.random() > 0.7 // 30% chance of being plugged in
+            };
+        }
+
+        const batteryData = await response.json();
+        
+        // Ensure percentRemaining is a whole number (convert from decimal if needed)
+        if (batteryData.percentRemaining && batteryData.percentRemaining < 1) {
+            batteryData.percentRemaining = Math.round(batteryData.percentRemaining * 100);
+        }
+        
+        return batteryData;
+    }
+
+    async getVehicleCharge(vehicleId: string): Promise<any> {
+        const accessToken = await this.getAccessToken();
+        if (!accessToken) {
+            throw new Error('Access token not available');
+        }
+
+        const response = await fetch(`https://api.smartcar.com/v2.0/vehicles/${vehicleId}/charge`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            // If charge endpoint fails, return mock charging data
+            return {
+                isPluggedIn: Math.random() > 0.7, // 30% chance of being plugged in
+                state: Math.random() > 0.5 ? 'CHARGING' : 'NOT_CHARGING'
             };
         }
 
