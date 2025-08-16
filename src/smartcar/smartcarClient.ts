@@ -1,18 +1,14 @@
-// import { tokenManager } from '../services/tokenManager';
+import { tokenManager } from '../services/tokenManager';
 
 export class SmartcarClient {
     private async getAccessToken(): Promise<string | null> {
-        // Temporarily use environment variables (fallback when MongoDB not available)
-        return process.env.SMARTCAR_ACCESS_TOKEN || null;
-        
-        // TODO: Re-enable when MongoDB is set up
-        // try {
-        //     const tokens = await tokenManager.getCurrentTokens();
-        //     return tokens?.accessToken || null;
-        // } catch (error) {
-        //     console.error('Error getting access token:', error);
-        //     return process.env.SMARTCAR_ACCESS_TOKEN || null;
-        // }
+        try {
+            const tokens = await tokenManager.getCurrentTokens();
+            return tokens?.accessToken || null;
+        } catch (error) {
+            console.error('Error getting access token from token manager, falling back to env vars:', error);
+            return process.env.SMARTCAR_ACCESS_TOKEN || null;
+        }
     }
 
     async getVehicles(): Promise<any> {
