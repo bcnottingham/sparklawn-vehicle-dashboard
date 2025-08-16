@@ -29,15 +29,9 @@ app.use('/diagnostics', diagnosticsRouter);
 async function startServer() {
   let tokenManagerEnabled = false;
   
-  try {
-    // Try to initialize automatic token management with MongoDB
-    await tokenManager.initialize();
-    tokenManagerEnabled = true;
-    console.log('✅ MongoDB token manager initialized successfully');
-  } catch (error) {
-    console.error('⚠️ MongoDB token manager failed to initialize:', error);
-    console.log('🔄 Continuing with environment variable fallback...');
-  }
+  // Temporarily disable MongoDB to debug connection issues
+  console.log('⚠️ MongoDB token manager temporarily disabled for debugging');
+  console.log('🔄 Using environment variable fallback only...');
   
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`🌱 SparkLawn Vehicle Dashboard running on:`);
@@ -57,13 +51,13 @@ async function startServer() {
 // Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\n🛑 Shutting down gracefully...');
-  await tokenManager.close();
+  // await tokenManager.close(); // Temporarily disabled
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.log('\n🛑 Shutting down gracefully...');
-  await tokenManager.close();
+  // await tokenManager.close(); // Temporarily disabled
   process.exit(0);
 });
 
