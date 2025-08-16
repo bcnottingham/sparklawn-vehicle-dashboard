@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import vehiclesRouter from './routes/vehicles';
 import diagnosticsRouter from './routes/diagnostics';
 import geofencingRouter from './routes/geofencing';
+import authRouter from './routes/auth';
 import { connectToDatabase } from './db/index';
 import { tokenManager } from './services/tokenManager';
 
@@ -26,6 +27,7 @@ app.get('/', (req, res) => {
 app.use('/vehicles', vehiclesRouter);
 app.use('/diagnostics', diagnosticsRouter);
 app.use('/geofencing', geofencingRouter);
+app.use('/auth', authRouter);
 
 // Start server with automatic token management
 async function startServer() {
