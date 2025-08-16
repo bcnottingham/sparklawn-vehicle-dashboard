@@ -149,12 +149,46 @@ router.get('/jobber/callback', async (req, res) => {
 // Check current Jobber connection status
 router.get('/jobber/status', async (req, res) => {
     try {
-        // Try to make a simple API call to check if tokens work
-        const properties = await jobberClient.getAllProperties();
+        // Try a simple GraphQL query to test connection
+        const accessToken = process.env.JOBBER_ACCESS_TOKEN;
+        if (!accessToken) {
+            throw new Error('Jobber access token not configured');
+        }
+
+        const testQuery = `
+            query TestConnection {
+                account {
+                    id
+                    name
+                }
+            }
+        `;
+
+        const response = await fetch('https://api.getjobber.com/api/graphql', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                query: testQuery
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.errors) {
+            throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
+        }
+
         res.json({
             connected: true,
             message: 'Jobber API connection successful',
-            propertiesCount: properties.length
+            account: data.data.account
         });
     } catch (error) {
         res.json({

@@ -55,8 +55,7 @@ export class JobberAPIClient {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${this.accessToken}`,
-                'Content-Type': 'application/json',
-                'X-JOBBER-GRAPHQL-VERSION': '2024-01-01'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 query,
