@@ -60,6 +60,27 @@ router.get('/:vehicleId/diagnostics', async (req, res) => {
 });
 
 // Get vehicles with names and locations
+// Debug endpoint to check token manager status
+router.get('/debug', async (req, res) => {
+    try {
+        const { tokenManager } = await import('../services/tokenManager');
+        const tokens = await tokenManager.getCurrentTokens();
+        res.json({
+            mongodb_uri: process.env.MONGODB_URI ? 'Set' : 'Not set',
+            has_tokens: !!tokens,
+            token_expires_at: tokens?.expiresAt || 'N/A',
+            client_id: process.env.SMARTCAR_CLIENT_ID || 'Not set',
+            fallback_access_token: process.env.SMARTCAR_ACCESS_TOKEN ? 'Set' : 'Not set'
+        });
+    } catch (error) {
+        res.json({
+            error: error.message,
+            mongodb_uri: process.env.MONGODB_URI ? 'Set' : 'Not set',
+            client_id: process.env.SMARTCAR_CLIENT_ID || 'Not set'
+        });
+    }
+});
+
 router.get('/with-names', async (req, res) => {
     try {
         const vehicles = await smartcarClient.getVehicles();
