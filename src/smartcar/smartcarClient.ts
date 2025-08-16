@@ -4,11 +4,23 @@ export class SmartcarClient {
     private async getAccessToken(): Promise<string | null> {
         try {
             const tokens = await tokenManager.getCurrentTokens();
-            return tokens?.accessToken || null;
+            if (tokens?.accessToken) {
+                console.log('✅ Using access token from MongoDB');
+                return tokens.accessToken;
+            }
         } catch (error) {
-            console.error('Error getting access token from token manager, falling back to env vars:', error);
-            return process.env.SMARTCAR_ACCESS_TOKEN || null;
+            console.error('❌ Error getting access token from token manager:', error);
         }
+        
+        // Fallback to environment variables
+        const envToken = process.env.SMARTCAR_ACCESS_TOKEN;
+        if (envToken) {
+            console.log('⚠️ Using fallback access token from environment variables');
+            return envToken;
+        }
+        
+        console.error('❌ No access token available from MongoDB or environment variables');
+        return null;
     }
 
     async getVehicles(): Promise<any> {

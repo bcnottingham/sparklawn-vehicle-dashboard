@@ -27,22 +27,31 @@ app.use('/diagnostics', diagnosticsRouter);
 
 // Start server with automatic token management
 async function startServer() {
+  let tokenManagerEnabled = false;
+  
   try {
-    // Initialize automatic token management with MongoDB
+    // Try to initialize automatic token management with MongoDB
     await tokenManager.initialize();
-    
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🌱 SparkLawn Vehicle Dashboard running on:`);
-      console.log(`   Local:    http://localhost:${PORT}`);
-      console.log(`   Network:  http://0.0.0.0:${PORT}`);
+    tokenManagerEnabled = true;
+    console.log('✅ MongoDB token manager initialized successfully');
+  } catch (error) {
+    console.error('⚠️ MongoDB token manager failed to initialize:', error);
+    console.log('🔄 Continuing with environment variable fallback...');
+  }
+  
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🌱 SparkLawn Vehicle Dashboard running on:`);
+    console.log(`   Local:    http://localhost:${PORT}`);
+    console.log(`   Network:  http://0.0.0.0:${PORT}`);
+    if (tokenManagerEnabled) {
       console.log(`   ✅ Automatic token refresh: ENABLED`);
       console.log(`   🔄 Refreshes every 90 minutes automatically`);
-      console.log(`   Share this URL with your business partner!`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
+    } else {
+      console.log(`   ⚠️ Automatic token refresh: DISABLED (using env vars)`);
+      console.log(`   📝 Check MongoDB connection and environment variables`);
+    }
+    console.log(`   Share this URL with your business partner!`);
+  });
 }
 
 // Graceful shutdown
