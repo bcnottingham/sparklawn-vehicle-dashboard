@@ -172,7 +172,7 @@ router.get('/jobber/status', async (req, res) => {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
-                'X-JOBBER-GRAPHQL-VERSION': '2024-08-16'
+                'X-JOBBER-GRAPHQL-VERSION': '2023-08-18'
             },
             body: JSON.stringify({
                 query: testQuery
