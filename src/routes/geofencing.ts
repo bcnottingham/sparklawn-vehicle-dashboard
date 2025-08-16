@@ -134,7 +134,10 @@ router.get('/jobber/properties', async (req, res) => {
         res.json({ properties, count: properties.length });
     } catch (error) {
         console.error('Error getting Jobber properties:', error);
-        res.status(500).json({ error: 'Failed to get Jobber properties' });
+        res.status(500).json({ 
+            error: 'Failed to get Jobber properties',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 });
 
