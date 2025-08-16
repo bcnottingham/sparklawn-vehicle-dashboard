@@ -255,6 +255,9 @@ async function refreshLocations() {
     refreshBtn.disabled = true;
 
     try {
+        // First fetch vehicle count
+        await fetchVehicles();
+        // Then fetch locations with names
         const vehicleLocations = await fetchAllVehicleLocations();
         updateVehicleMarkers(vehicleLocations);
     } catch (error) {
