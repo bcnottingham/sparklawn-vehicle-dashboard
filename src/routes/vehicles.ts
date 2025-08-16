@@ -74,7 +74,7 @@ router.get('/debug', async (req, res) => {
         });
     } catch (error) {
         res.json({
-            error: error.message,
+            error: error instanceof Error ? error.message : 'Unknown error',
             mongodb_uri: process.env.MONGODB_URI ? 'Set' : 'Not set',
             client_id: process.env.SMARTCAR_CLIENT_ID || 'Not set'
         });
