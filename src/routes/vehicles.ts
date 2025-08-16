@@ -83,6 +83,9 @@ router.get('/debug', async (req, res) => {
 
 router.get('/with-names', async (req, res) => {
     try {
+        // Clear geocoding cache to ensure fresh addresses
+        geocodingService.clearCache();
+        
         const vehicles = await smartcarClient.getVehicles();
         const vehiclesWithNames = await Promise.all(
             vehicles.vehicles.map(async (vehicleId: string) => {

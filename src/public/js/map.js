@@ -52,7 +52,9 @@ async function fetchVehicleLocation(vehicleId) {
 // Fetch all vehicles with names and locations
 async function fetchAllVehicleLocations() {
     try {
-        const response = await fetch('/vehicles/with-names');
+        // Add cache-busting timestamp
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/vehicles/with-names?t=${timestamp}`);
         const data = await response.json();
         return data.vehicles.filter(vehicle => vehicle.location && !vehicle.error);
     } catch (error) {
@@ -96,12 +98,8 @@ function updateVehicleMarkers(vehicleLocations) {
             }
 
             // Create charging status text
-            function getChargingStatus() {
-                if (isCharging || isPluggedIn) {
-                    return `<span class="charging-status">🔌 Charging</span>`;
-                }
-                return '';
-            }
+            const chargingStatusText = (isCharging || isPluggedIn) ? 
+                `<span class="charging-status">🔌 Charging</span>` : '';
 
             marker.bindPopup(`
                 <div class="vehicle-popup">
@@ -113,7 +111,7 @@ function updateVehicleMarkers(vehicleLocations) {
                                  style="width: ${batteryPercent}%"></div>
                         </div>
                         <span class="battery-text">${batteryPercent}%</span>
-                        ${getChargingStatus()}
+                        ${chargingStatusText}
                     </div>
                     <p class="address-text">${address}</p>
                     <button onclick="selectVehicle('${vehicle.id}')">View Details</button>
@@ -163,12 +161,8 @@ function updateVehicleList(vehicleLocations) {
             return 'high';
         }
         
-        function getChargingStatus() {
-            if (isCharging || isPluggedIn) {
-                return `<span class="charging-status">🔌 Charging</span>`;
-            }
-            return '';
-        }
+        const chargingStatusText = (isCharging || isPluggedIn) ? 
+            `<span class="charging-status">🔌 Charging</span>` : '';
         
         const vehicleItem = document.createElement('div');
         vehicleItem.className = 'vehicle-item';
@@ -230,7 +224,7 @@ async function selectVehicle(vehicleId, vehicleName) {
                                  style="width: ${batteryPercent}%"></div>
                         </div>
                         <span class="battery-text">${batteryPercent}%</span>
-                        ${getChargingStatus()}
+                        ${chargingStatusText}
                     </div>
                 </div>
                 <div class="detail-group">
