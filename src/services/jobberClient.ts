@@ -39,17 +39,30 @@ export class JobberAPIClient {
 
     async authenticate(): Promise<void> {
         try {
+            console.log('🔍 JobberClient: Attempting to get tokens from MongoDB...');
+            
             // Get current valid tokens from MongoDB
             const tokens = await tokenManager.getCurrentJobberTokens();
             
             if (tokens) {
+                console.log('✅ JobberClient: Got tokens from MongoDB');
                 this.accessToken = tokens.accessToken;
+                return;
+            }
+
+            console.log('⚠️ JobberClient: No tokens in MongoDB, falling back to env vars');
+            
+            // Fallback to environment variables
+            const envToken = process.env.JOBBER_ACCESS_TOKEN;
+            if (envToken) {
+                console.log('✅ JobberClient: Using environment variable token');
+                this.accessToken = envToken;
                 return;
             }
 
             throw new Error('Jobber access token not available. Please complete OAuth flow.');
         } catch (error) {
-            console.error('Jobber authentication failed:', error);
+            console.error('❌ Jobber authentication failed:', error);
             throw error;
         }
     }
