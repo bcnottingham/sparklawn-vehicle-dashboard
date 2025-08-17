@@ -1,5 +1,6 @@
 import { FordPassClient, VehicleStatus } from './fordpassClient';
 import { SmartcarClient } from '../smartcar/smartcarClient';
+import { tripHistoryService } from './tripHistoryService';
 
 export interface HybridVehicleData {
     id: string;
@@ -121,6 +122,10 @@ export class HybridVehicleClient {
                 }
                 
                 console.log('✅ FordPass data retrieved successfully');
+                
+                // Record location for trip history
+                await this.recordLocationForTrip(vehicleData);
+                
                 return vehicleData;
                 
             } catch (error) {
@@ -170,6 +175,9 @@ export class HybridVehicleClient {
                 lastUpdated: new Date().toISOString()
             };
             
+            // Record location for trip history
+            await this.recordLocationForTrip(vehicleData);
+            
             return vehicleData;
             
         } catch (smartcarError) {
@@ -202,6 +210,26 @@ export class HybridVehicleClient {
         // Simple vehicle naming based on ID patterns
         if (vehicleId.includes('2dc0332a')) return 'Van';
         return 'Truck';
+    }
+    
+    private async recordLocationForTrip(vehicleData: HybridVehicleData): Promise<void> {
+        try {
+            if (vehicleData.location && vehicleData.location.latitude && vehicleData.location.longitude) {
+                await tripHistoryService.recordVehicleLocation(
+                    vehicleData.id,
+                    vehicleData.name,
+                    vehicleData.location.latitude,
+                    vehicleData.location.longitude,
+                    vehicleData.battery.percentRemaining,
+                    undefined, // speed - not available from current APIs
+                    vehicleData.location.address,
+                    vehicleData.battery._dataSource as 'fordpass' | 'smartcar' | 'mock'
+                );
+            }
+        } catch (error) {
+            console.error('❌ Failed to record location for trip history:', error);
+            // Don't throw - this shouldn't break the main flow
+        }
     }
     
     // Vehicle control methods (FordPass only)
