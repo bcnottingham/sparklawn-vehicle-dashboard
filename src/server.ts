@@ -79,12 +79,12 @@ app.get('/fleet', (req, res) => {
     res.sendFile(path.join(__dirname, '../src/views/fleet-dashboard.html'));
 });
 
-// Routes
-app.use('/vehicles', vehiclesRouter);
-app.use('/diagnostics', diagnosticsRouter);
-app.use('/geofencing', geofencingRouter);
-app.use('/auth', authRouter);
-app.use('/trips', tripsRouter);
+// API Routes
+app.use('/api/vehicles', vehiclesRouter);
+app.use('/api/diagnostics', diagnosticsRouter);
+app.use('/api/geofencing', geofencingRouter);
+app.use('/api/trips', tripsRouter);
+app.use('/auth', authRouter); // Keep auth at root for OAuth callbacks
 
 // Start server with automatic token management
 async function startServer() {
