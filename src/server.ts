@@ -69,6 +69,16 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../src/views/index.html'));
 });
 
+// Serve the clean location-focused dashboard
+app.get('/clean', (req, res) => {
+    res.sendFile(path.join(__dirname, '../src/views/clean-dashboard.html'));
+});
+
+// Serve the fleet analytics dashboard
+app.get('/fleet', (req, res) => {
+    res.sendFile(path.join(__dirname, '../src/views/fleet-dashboard.html'));
+});
+
 // Routes
 app.use('/vehicles', vehiclesRouter);
 app.use('/diagnostics', diagnosticsRouter);

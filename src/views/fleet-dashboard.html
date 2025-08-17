@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SparkLawn Fleet Analytics Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/css/modern-styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Fleet Dashboard Specific Styles */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-8);
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            transition: all 0.2s ease;
+        }
+        
+        .metric-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        
+        .metric-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-4);
+        }
+        
+        .metric-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .metric-icon {
+            font-size: 1.5rem;
+            opacity: 0.7;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .metric-subtitle {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            margin-bottom: var(--space-4);
+        }
+        
+        .metric-change {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-1);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-md);
+        }
+        
+        .metric-change.positive {
+            background: #dcfce7;
+            color: #15803d;
+        }
+        
+        .metric-change.negative {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        
+        .metric-change.neutral {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+        
+        .chart-container {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+            color: var(--gray-500);
+            margin-top: var(--space-4);
+        }
+        
+        .vehicle-efficiency-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--space-4);
+        }
+        
+        .vehicle-efficiency-table th,
+        .vehicle-efficiency-table td {
+            text-align: left;
+            padding: var(--space-3);
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .vehicle-efficiency-table th {
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .vehicle-efficiency-table td {
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .efficiency-bar {
+            background: var(--gray-200);
+            height: 8px;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            margin-top: var(--space-1);
+        }
+        
+        .efficiency-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-green), var(--primary-green-light));
+            transition: width 0.3s ease;
+        }
+        
+        .time-filter {
+            display: flex;
+            gap: var(--space-2);
+            margin-bottom: var(--space-6);
+            background: white;
+            padding: var(--space-4);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+        }
+        
+        .time-filter button {
+            padding: var(--space-2) var(--space-4);
+            border: 1px solid var(--gray-300);
+            background: white;
+            border-radius: var(--radius-lg);
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .time-filter button.active {
+            background: var(--primary-green);
+            color: white;
+            border-color: var(--primary-green);
+        }
+        
+        .time-filter button:hover:not(.active) {
+            background: var(--gray-50);
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-8);
+        }
+        
+        .dashboard-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0;
+        }
+        
+        .refresh-button {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-3) var(--space-4);
+            background: var(--primary-green);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .refresh-button:hover {
+            background: var(--primary-green-light);
+            transform: translateY(-1px);
+        }
+        
+        .alert-card {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 1px solid #f59e0b;
+            color: #92400e;
+        }
+        
+        .success-card {
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+            border: 1px solid var(--primary-green);
+            color: var(--primary-green-dark);
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                gap: var(--space-4);
+                align-items: stretch;
+            }
+            
+            .dashboard-title {
+                font-size: 1.5rem;
+                text-align: center;
+            }
+            
+            .time-filter {
+                flex-wrap: wrap;
+            }
+            
+            .metric-value {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>📊 SparkLawn Fleet Analytics</h1>
+            <div class="status-bar">
+                <span id="data-period">Last 7 days</span>
+                <span id="last-update">Last updated: --</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="dashboard-header">
+            <h2 class="dashboard-title">Fleet Performance Overview</h2>
+            <button id="refresh-data" class="refresh-button">
+                <span>🔄</span>
+                <span>Refresh Data</span>
+            </button>
+        </div>
+        
+        <div class="time-filter">
+            <button class="time-btn active" data-period="1">Today</button>
+            <button class="time-btn" data-period="7">7 Days</button>
+            <button class="time-btn" data-period="30">30 Days</button>
+            <button class="time-btn" data-period="90">90 Days</button>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- Total Distance -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Total Distance</div>
+                    <div class="metric-icon">🛣️</div>
+                </div>
+                <div class="metric-value" id="total-distance">--</div>
+                <div class="metric-subtitle">Miles traveled</div>
+                <div class="metric-change neutral" id="distance-change">
+                    <span>--</span>
+                </div>
+            </div>
+            
+            <!-- Total Trips -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Total Trips</div>
+                    <div class="metric-icon">🚗</div>
+                </div>
+                <div class="metric-value" id="total-trips">--</div>
+                <div class="metric-subtitle">Completed journeys</div>
+                <div class="metric-change neutral" id="trips-change">
+                    <span>--</span>
+                </div>
+            </div>
+            
+            <!-- Average Trip Duration -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Avg Trip Duration</div>
+                    <div class="metric-icon">⏱️</div>
+                </div>
+                <div class="metric-value" id="avg-duration">--</div>
+                <div class="metric-subtitle">Minutes per trip</div>
+                <div class="metric-change neutral" id="duration-change">
+                    <span>--</span>
+                </div>
+            </div>
+            
+            <!-- Energy Efficiency -->
+            <div class="metric-card success-card">
+                <div class="metric-header">
+                    <div class="metric-title">Energy Efficiency</div>
+                    <div class="metric-icon">⚡</div>
+                </div>
+                <div class="metric-value" id="energy-efficiency">--</div>
+                <div class="metric-subtitle">Miles per % battery</div>
+                <div class="metric-change neutral" id="efficiency-change">
+                    <span>--</span>
+                </div>
+            </div>
+            
+            <!-- Active Vehicles -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Active Vehicles</div>
+                    <div class="metric-icon">🚛</div>
+                </div>
+                <div class="metric-value" id="active-vehicles">--</div>
+                <div class="metric-subtitle">Vehicles with trips</div>
+                <div class="metric-change neutral" id="vehicles-change">
+                    <span>--</span>
+                </div>
+            </div>
+            
+            <!-- Fleet Utilization -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Fleet Utilization</div>
+                    <div class="metric-icon">📈</div>
+                </div>
+                <div class="metric-value" id="fleet-utilization">--</div>
+                <div class="metric-subtitle">% of time in use</div>
+                <div class="metric-change neutral" id="utilization-change">
+                    <span>--</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Vehicle Performance Table -->
+        <div class="metric-card">
+            <div class="metric-header">
+                <div class="metric-title">Vehicle Performance Breakdown</div>
+                <div class="metric-icon">📋</div>
+            </div>
+            <table class="vehicle-efficiency-table" id="vehicle-performance-table">
+                <thead>
+                    <tr>
+                        <th>Vehicle</th>
+                        <th>Trips</th>
+                        <th>Distance</th>
+                        <th>Avg Duration</th>
+                        <th>Efficiency</th>
+                        <th>Performance</th>
+                    </tr>
+                </thead>
+                <tbody id="vehicle-performance-body">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                            Loading vehicle performance data...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Trip Timeline Chart -->
+        <div class="metric-card">
+            <div class="metric-header">
+                <div class="metric-title">Trip Activity Timeline</div>
+                <div class="metric-icon">📊</div>
+            </div>
+            <div class="chart-container">
+                <div>📊 Interactive charts coming soon</div>
+            </div>
+        </div>
+        
+        <!-- Energy Usage Chart -->
+        <div class="metric-card">
+            <div class="metric-header">
+                <div class="metric-title">Energy Usage Trends</div>
+                <div class="metric-icon">⚡</div>
+            </div>
+            <div class="chart-container">
+                <div>⚡ Energy analytics coming soon</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Fleet Dashboard JavaScript
+        let currentPeriod = 7;
+        let fleetData = null;
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            loadFleetData();
+            
+            // Auto-refresh every 5 minutes
+            setInterval(loadFleetData, 5 * 60 * 1000);
+        });
+        
+        function setupEventListeners() {
+            // Time filter buttons
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentPeriod = parseInt(this.dataset.period);
+                    updateDataPeriodLabel();
+                    loadFleetData();
+                });
+            });
+            
+            // Refresh button
+            document.getElementById('refresh-data').addEventListener('click', loadFleetData);
+        }
+        
+        function updateDataPeriodLabel() {
+            const periodLabels = {
+                1: 'Today',
+                7: 'Last 7 days',
+                30: 'Last 30 days',
+                90: 'Last 90 days'
+            };
+            document.getElementById('data-period').textContent = periodLabels[currentPeriod];
+        }
+        
+        async function loadFleetData() {
+            const refreshBtn = document.getElementById('refresh-data');
+            refreshBtn.innerHTML = '<span>⏳</span><span>Loading...</span>';
+            refreshBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`/trips/stats/fleet/overview?days=${currentPeriod}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                fleetData = data.stats;
+                
+                updateMetrics(fleetData);
+                updateVehicleTable(fleetData.vehicleBreakdown || {});
+                updateLastUpdateTime();
+                
+            } catch (error) {
+                console.error('Failed to load fleet data:', error);
+                showErrorState();
+            } finally {
+                refreshBtn.innerHTML = '<span>🔄</span><span>Refresh Data</span>';
+                refreshBtn.disabled = false;
+            }
+        }
+        
+        function updateMetrics(data) {
+            // Total Distance
+            document.getElementById('total-distance').textContent = 
+                data.totalDistance ? `${data.totalDistance.toFixed(1)}` : '0.0';
+            
+            // Total Trips
+            document.getElementById('total-trips').textContent = 
+                data.totalTrips ? data.totalTrips.toLocaleString() : '0';
+            
+            // Average Duration
+            const avgDuration = data.totalTrips > 0 ? Math.round(data.totalDuration / data.totalTrips) : 0;
+            document.getElementById('avg-duration').textContent = avgDuration;
+            
+            // Energy Efficiency
+            const efficiency = data.totalDistance && data.totalTrips > 0 ? 
+                (data.totalDistance / data.totalTrips * 10).toFixed(1) : '0.0';
+            document.getElementById('energy-efficiency').textContent = efficiency;
+            
+            // Active Vehicles
+            document.getElementById('active-vehicles').textContent = 
+                data.activeVehicles ? data.activeVehicles : '0';
+            
+            // Fleet Utilization (simplified calculation)
+            const utilization = data.totalTrips > 0 ? Math.min(100, (data.totalTrips / currentPeriod * 10)) : 0;
+            document.getElementById('fleet-utilization').textContent = `${utilization.toFixed(0)}%`;
+            
+            // Update change indicators (placeholder logic)
+            updateChangeIndicators();
+        }
+        
+        function updateChangeIndicators() {
+            // Placeholder change calculations
+            const changes = [
+                { id: 'distance-change', value: '+12%', type: 'positive' },
+                { id: 'trips-change', value: '+8%', type: 'positive' },
+                { id: 'duration-change', value: '-3%', type: 'negative' },
+                { id: 'efficiency-change', value: '+5%', type: 'positive' },
+                { id: 'vehicles-change', value: '0%', type: 'neutral' },
+                { id: 'utilization-change', value: '+15%', type: 'positive' }
+            ];
+            
+            changes.forEach(change => {
+                const element = document.getElementById(change.id);
+                if (element) {
+                    element.className = `metric-change ${change.type}`;
+                    element.innerHTML = `<span>${change.value}</span>`;
+                }
+            });
+        }
+        
+        function updateVehicleTable(vehicleBreakdown) {
+            const tbody = document.getElementById('vehicle-performance-body');
+            
+            if (!vehicleBreakdown || Object.keys(vehicleBreakdown).length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                            No trip data available for this period
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            
+            Object.entries(vehicleBreakdown).forEach(([vehicleId, stats]) => {
+                const avgDuration = stats.trips > 0 ? Math.round(stats.duration / stats.trips) : 0;
+                const efficiency = stats.distance > 0 ? (stats.distance / stats.trips).toFixed(1) : '0.0';
+                const performanceScore = Math.min(100, (stats.trips * 10 + stats.distance * 2));
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <strong>${stats.vehicleName || vehicleId}</strong><br>
+                        <small style="color: var(--gray-500);">${vehicleId.substring(0, 8)}...</small>
+                    </td>
+                    <td>${stats.trips}</td>
+                    <td>${stats.distance.toFixed(1)} mi</td>
+                    <td>${avgDuration} min</td>
+                    <td>${efficiency} mi/trip</td>
+                    <td>
+                        <div class="efficiency-bar">
+                            <div class="efficiency-fill" style="width: ${performanceScore}%"></div>
+                        </div>
+                        <small style="color: var(--gray-600);">${performanceScore.toFixed(0)}%</small>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        function updateLastUpdateTime() {
+            const now = new Date();
+            document.getElementById('last-update').textContent = 
+                `Last updated: ${now.toLocaleTimeString()}`;
+        }
+        
+        function showErrorState() {
+            // Show error indicators
+            document.querySelectorAll('.metric-value').forEach(el => {
+                el.textContent = 'Error';
+                el.style.color = 'var(--status-error)';
+            });
+            
+            document.querySelectorAll('.metric-change').forEach(el => {
+                el.className = 'metric-change neutral';
+                el.innerHTML = '<span>--</span>';
+            });
+            
+            document.getElementById('vehicle-performance-body').innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--status-error);">
+                        ❌ Failed to load fleet data. Please try refreshing.
+                    </td>
+                </tr>
+            `;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SparkLawn Fleet Tracking</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/css/clean-location-focused.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+    <!-- Minimal Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-brand">
+                <a href="/" class="header-logo">🌱 SparkLawn</a>
+                <div class="header-subtitle">Fleet Tracking</div>
+            </div>
+            <div class="header-status">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span id="connection-status">Live</span>
+                </div>
+                <div class="status-indicator">
+                    <span id="vehicle-count">-- vehicles</span>
+                </div>
+                <div class="status-indicator">
+                    <span id="last-update">--</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main App Container -->
+    <div class="app-container">
+        <!-- Full-Screen Map -->
+        <div class="map-primary">
+            <div id="map"></div>
+        </div>
+
+        <!-- Floating Vehicle Panel -->
+        <div class="vehicle-overlay">
+            <div class="vehicle-panel-header">
+                <h2 class="panel-title">Active Vehicles</h2>
+                <div class="panel-subtitle">
+                    <span class="vehicle-count-badge" id="online-count">0 Online</span>
+                    <span id="last-refresh">Updated now</span>
+                </div>
+            </div>
+            <div class="vehicle-list" id="vehicle-list">
+                <!-- Loading State -->
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <span>Loading vehicles...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Controls -->
+        <div class="map-controls">
+            <button id="refresh-btn" class="control-button" title="Refresh Locations">
+                🔄
+            </button>
+            <button id="center-btn" class="control-button" title="Center All Vehicles">
+                📍
+            </button>
+            <button id="layers-btn" class="control-button" title="Map Layers">
+                🗺️
+            </button>
+        </div>
+
+        <!-- Future Menu Trigger -->
+        <button class="menu-trigger" id="menu-trigger" title="Menu" style="display: none;">
+            ⚙️
+        </button>
+
+        <!-- Future Notification Area -->
+        <div class="notification-area" id="notification-area">
+            <div style="font-size: 0.75rem; color: var(--gray-500); text-align: center;">
+                Notifications will appear here
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/js/clean-map.js"></script>
+</body>
+</html>
