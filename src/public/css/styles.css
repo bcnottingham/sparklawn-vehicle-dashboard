@@ -371,4 +371,4 @@ body {
         flex-direction: column;
         gap: 0.25rem;
     }
-}
+}.fleet-panel { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid rgba(34, 84, 61, 0.1); }

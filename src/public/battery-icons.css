@@ -1,0 +1,120 @@
+/* Battery Icon Styles */
+.battery-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.battery-icon {
+    position: relative;
+    width: 32px;
+    height: 18px;
+    border: 2px solid #333;
+    border-radius: 3px;
+    background: #fff;
+    display: inline-block;
+}
+
+.battery-icon::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: 4px;
+    width: 3px;
+    height: 8px;
+    background: #333;
+    border-radius: 0 2px 2px 0;
+}
+
+.battery-fill {
+    position: absolute;
+    left: 1px;
+    top: 1px;
+    bottom: 1px;
+    border-radius: 1px;
+    transition: all 0.3s ease;
+}
+
+/* Battery levels and colors */
+.battery-low .battery-fill {
+    background: #ff4757; /* Red 0-35% */
+}
+
+.battery-medium .battery-fill {
+    background: #ffa502; /* Yellow 35-70% */
+}
+
+.battery-high .battery-fill {
+    background: #2ed573; /* Green 70-100% */
+}
+
+/* Charging animation */
+.battery-charging {
+    position: relative;
+    overflow: hidden;
+}
+
+.battery-charging .battery-fill::after {
+    content: '⚡';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 10px;
+    text-shadow: 0 0 2px rgba(0,0,0,0.5);
+    animation: charging-pulse 1.5s ease-in-out infinite;
+}
+
+.battery-charging .charging-indicator {
+    color: #2ed573;
+    font-weight: bold;
+}
+
+@keyframes charging-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Status text colors */
+.battery-status {
+    color: #333;
+}
+
+.battery-status.low {
+    color: #ff4757;
+}
+
+.battery-status.medium {
+    color: #ffa502;
+}
+
+.battery-status.high {
+    color: #2ed573;
+}
+
+.charging-time {
+    color: #666;
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* Plugged in indicator */
+.plug-indicator {
+    color: #2ed573;
+    font-size: 12px;
+    margin-left: 4px;
+}
+
+/* Mock data warning */
+.mock-data-warning {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    margin-left: 8px;
+}

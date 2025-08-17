@@ -6,6 +6,7 @@
     <title>SparkLawn Vehicle Locations</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/battery-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -29,13 +30,19 @@
         </div>
         
         <div class="sidebar">
+            <div id="fleet-overview" class="fleet-panel">
+                <!-- Fleet battery overview will be inserted here -->
+            </div>
+            
             <div class="vehicle-panel">
-                <h2>Vehicle Fleet</h2>
-                <div id="vehicle-list"></div>
+                <h2>🚛 Vehicle Fleet</h2>
+                <div id="vehicle-list">
+                    <!-- Vehicle cards with battery icons will be inserted here -->
+                </div>
             </div>
             
             <div class="info-panel">
-                <h3>Selected Vehicle</h3>
+                <h3>📋 Selected Vehicle</h3>
                 <div id="vehicle-details">
                     <p>Select a vehicle on the map to view details</p>
                 </div>
@@ -44,6 +51,7 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/battery-component.js"></script>
     <script src="/js/map.js"></script>
 </body>
 </html>
