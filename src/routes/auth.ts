@@ -381,4 +381,32 @@ router.get('/smartcar/callback', async (req, res) => {
     }
 });
 
+// Test endpoint for Smartcar MongoDB token management
+router.get('/smartcar/mongodb-test', async (req, res) => {
+    try {
+        const { tokenManager } = await import('../services/tokenManager');
+        
+        console.log('Testing Smartcar MongoDB token retrieval...');
+        const tokens = await tokenManager.getCurrentTokens();
+        
+        res.json({
+            success: true,
+            hasTokens: !!tokens,
+            tokenInfo: tokens ? {
+                hasAccessToken: !!tokens.accessToken,
+                hasRefreshToken: !!tokens.refreshToken,
+                expiresAt: tokens.expiresAt,
+                lastUpdated: tokens.lastUpdated,
+                accessTokenStart: tokens.accessToken?.substring(0, 20)
+            } : null
+        });
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            details: 'Smartcar MongoDB token test failed'
+        });
+    }
+});
+
 export default router;
