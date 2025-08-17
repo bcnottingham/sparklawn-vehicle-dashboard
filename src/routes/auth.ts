@@ -155,6 +155,11 @@ router.get('/jobber/status', async (req, res) => {
             throw new Error('Jobber access token not configured');
         }
 
+        // Debug token info
+        console.log('Token length:', accessToken.length);
+        console.log('Token starts with:', accessToken.substring(0, 20));
+        console.log('Token ends with:', accessToken.substring(accessToken.length - 20));
+
         const testQuery = `
             query {
                 clients(first: 1) {
@@ -183,10 +188,14 @@ router.get('/jobber/status', async (req, res) => {
 
         if (!response.ok) {
             // Return the actual error response for debugging
+            console.log('Full response headers:', Object.fromEntries(response.headers.entries()));
+            console.log('Response body:', JSON.stringify(data, null, 2));
             res.json({
                 connected: false,
                 error: `API request failed: ${response.status} ${response.statusText}`,
                 errorDetails: data,
+                tokenLength: accessToken.length,
+                tokenStart: accessToken.substring(0, 20),
                 message: 'Jobber API connection failed - check error details'
             });
             return;
