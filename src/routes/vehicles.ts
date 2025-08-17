@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { SmartcarClient } from '../smartcar/smartcarClient';
+import { hybridVehicleClient } from '../services/hybridVehicleClient';
 import { vehicleNaming } from '../services/vehicleNaming';
 import { geocodingService } from '../services/geocoding';
 
@@ -236,107 +237,122 @@ router.get('/debug', async (req, res) => {
     }
 });
 
+// Get all vehicles with detailed information - HYBRID FordPass + Smartcar
 router.get('/with-names', async (req, res) => {
     try {
-        // Don't clear cache on every request - only clear if explicitly requested
+        console.log('🚗 Fetching vehicles using hybrid client (FordPass primary, Smartcar fallback)');
+        
+        // Clear geocoding cache if requested
         if (req.query.clearCache === 'true') {
             geocodingService.clearCache();
         }
         
-        const vehicles = await smartcarClient.getVehicles();
+        const result = await hybridVehicleClient.getVehiclesWithDetails();
         
-        // Process all vehicles in parallel with better error handling
-        const vehiclesWithNames = await Promise.allSettled(
-            vehicles.vehicles.map(async (vehicleId: string) => {
-                try {
-                    // Parallel API calls with timeouts
-                    const [location, battery, charge] = await Promise.allSettled([
+        res.json({ 
+            vehicles: result.vehicles,
+            count: result.vehicles.length,
+            timestamp: new Date().toISOString(),
+            dataSources: result.vehicles.map(v => ({
+                id: v.id,
+                name: v.name,
+                source: v.battery._dataSource,
+                isMockData: v.battery._isMockData
+            }))
+        });
+        
+        console.log(`✅ Successfully retrieved ${result.vehicles.length} vehicles`);
+        
+    } catch (error) {
+        console.error('❌ Hybrid client failed, attempting emergency Smartcar fallback:', error);
+        
+        // Emergency fallback to pure Smartcar
+        try {
+            const vehicles = await smartcarClient.getVehicles();
+            const vehiclesWithNames = await Promise.allSettled(
+                vehicles.vehicles.map(async (vehicleId: string) => {
+                    const [location, battery] = await Promise.allSettled([
                         smartcarClient.getVehicleLocation(vehicleId),
-                        smartcarClient.getVehicleBattery(vehicleId),
-                        smartcarClient.getVehicleCharge(vehicleId)
+                        smartcarClient.getVehicleBattery(vehicleId)
                     ]);
                     
-                    // Extract results or use fallbacks
                     const locationData = location.status === 'fulfilled' ? location.value : null;
-                    const batteryData = battery.status === 'fulfilled' ? battery.value : null;
-                    const chargeData = charge.status === 'fulfilled' ? charge.value : null;
-                    
-                    if (!locationData) {
-                        throw new Error('Failed to get vehicle location');
-                    }
+                    const batteryData = battery.status === 'fulfilled' ? battery.value : { 
+                        percentRemaining: 0, 
+                        range: 0, 
+                        isPluggedIn: false,
+                        _isMockData: true 
+                    };
                     
                     const name = vehicleNaming.setVehicleName(vehicleId);
-                    
-                    // Map names to vehicle types for display
                     const vehicleTypes: { [key: string]: { model: string, year: string } } = {
                         'Van': { model: 'Transit', year: '2023' },
                         'Truck': { model: 'F-150 Lightning', year: '2024' }
                     };
-                    
                     const vehicleType = vehicleTypes[name] || { model: 'F-150 Lightning', year: '2024' };
                     
-                    // Get street address (with caching)
-                    const address = await geocodingService.getAddress(locationData.latitude, locationData.longitude);
-                    
-                    // Combine battery and charging data with better fallbacks
-                    const finalBatteryData = batteryData || { percentRemaining: Math.floor(Math.random() * 40) + 60 };
-                    const finalChargeData = chargeData || { isPluggedIn: false, state: 'NOT_CHARGING' };
+                    let address = 'Location unavailable';
+                    if (locationData) {
+                        try {
+                            address = await geocodingService.getAddress(locationData.latitude, locationData.longitude);
+                        } catch (geocodeError) {
+                            address = `${locationData.latitude.toFixed(4)}, ${locationData.longitude.toFixed(4)}`;
+                        }
+                    }
                     
                     return {
                         id: vehicleId,
                         name,
-                        location: {
-                            ...locationData,
+                        location: locationData ? {
+                            latitude: locationData.latitude,
+                            longitude: locationData.longitude,
                             address
-                        },
+                        } : null,
                         battery: {
-                            ...finalBatteryData,
-                            isPluggedIn: finalChargeData.isPluggedIn || false,
-                            isCharging: finalChargeData.state === 'CHARGING' || finalChargeData.isPluggedIn
+                            percentRemaining: batteryData.percentRemaining || 0,
+                            range: batteryData.range || 0,
+                            isPluggedIn: batteryData.isPluggedIn || false,
+                            isCharging: batteryData.isPluggedIn || false,
+                            _isMockData: true,
+                            _dataSource: 'smartcar-emergency'
                         },
                         make: 'Ford',
                         model: vehicleType.model,
-                        year: vehicleType.year
+                        year: vehicleType.year,
+                        lastUpdated: new Date().toISOString()
                     };
-                } catch (error) {
-                    console.error(`Error fetching data for vehicle ${vehicleId}:`, error);
-                    const name = vehicleNaming.setVehicleName(vehicleId);
-                    return {
-                        id: vehicleId,
-                        name,
-                        error: 'Failed to fetch vehicle data',
-                        make: 'Ford',
-                        model: 'Unknown',
-                        year: '2024'
-                    };
-                }
-            })
-        );
-        
-        // Extract successful results and log failures
-        const results = vehiclesWithNames.map((result, index) => {
-            if (result.status === 'fulfilled') {
-                return result.value;
-            } else {
-                console.error(`Vehicle ${vehicles.vehicles[index]} processing failed:`, result.reason);
-                return {
-                    id: vehicles.vehicles[index],
-                    name: vehicleNaming.setVehicleName(vehicles.vehicles[index]),
-                    error: 'Vehicle data unavailable',
-                    make: 'Ford',
-                    model: 'Unknown',
-                    year: '2024'
-                };
-            }
-        });
-        
-        res.json({ vehicles: results });
-    } catch (error) {
-        console.error('Error fetching vehicles with names:', error);
-        res.status(500).json({ 
-            error: 'Failed to fetch vehicles with names',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        });
+                })
+            );
+            
+            const successfulVehicles = vehiclesWithNames
+                .filter((result): result is PromiseFulfilledResult<any> => 
+                    result.status === 'fulfilled'
+                )
+                .map(result => result.value);
+            
+            res.json({ 
+                vehicles: successfulVehicles,
+                count: successfulVehicles.length,
+                timestamp: new Date().toISOString(),
+                warning: '⚠️ Using emergency Smartcar fallback - FordPass unavailable',
+                dataSources: successfulVehicles.map(v => ({
+                    id: v.id,
+                    name: v.name,
+                    source: 'smartcar-emergency',
+                    isMockData: true
+                }))
+            });
+            
+            console.log('⚠️ Emergency Smartcar fallback successful');
+            
+        } catch (emergencyError) {
+            console.error('❌ All vehicle data sources failed:', emergencyError);
+            res.status(500).json({ 
+                error: 'All vehicle data sources failed',
+                details: 'Both FordPass and Smartcar are unavailable',
+                timestamp: new Date().toISOString()
+            });
+        }
     }
 });
 

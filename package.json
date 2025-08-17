@@ -12,10 +12,12 @@
   "dependencies": {
     "@types/express": "^5.0.3",
     "@types/node": "^24.3.0",
+    "@types/node-fetch": "^2.6.13",
     "axios": "^0.21.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "mongoose": "^5.10.9"
+    "mongoose": "^5.10.9",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "ts-node": "^9.1.1",
@@ -26,7 +28,13 @@
     "node": ">=18.0.0"
   },
   "license": "MIT",
-  "keywords": ["sparklawn", "vehicle-tracking", "smartcar", "fleet-management", "dashboard"],
+  "keywords": [
+    "sparklawn",
+    "vehicle-tracking",
+    "smartcar",
+    "fleet-management",
+    "dashboard"
+  ],
   "author": "SparkLawn NWA",
   "homepage": "https://www.sparklawnnwa.com"
 }
