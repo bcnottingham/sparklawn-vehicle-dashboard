@@ -1,6 +1,44 @@
 import { tokenManager } from '../services/tokenManager';
 
+// Simple circuit breaker for API resilience
+class CircuitBreaker {
+    private failures = 0;
+    private lastFailureTime = 0;
+    private readonly failureThreshold = 5;
+    private readonly timeoutMs = 30000; // 30 seconds
+    
+    async execute<T>(operation: () => Promise<T>): Promise<T> {
+        if (this.isOpen()) {
+            throw new Error('Circuit breaker is open - too many recent failures');
+        }
+        
+        try {
+            const result = await operation();
+            this.onSuccess();
+            return result;
+        } catch (error) {
+            this.onFailure();
+            throw error;
+        }
+    }
+    
+    private isOpen(): boolean {
+        return this.failures >= this.failureThreshold && 
+               (Date.now() - this.lastFailureTime) < this.timeoutMs;
+    }
+    
+    private onSuccess(): void {
+        this.failures = 0;
+    }
+    
+    private onFailure(): void {
+        this.failures++;
+        this.lastFailureTime = Date.now();
+    }
+}
+
 export class SmartcarClient {
+    private circuitBreaker = new CircuitBreaker();
     private async getAccessToken(): Promise<string | null> {
         try {
             const tokens = await tokenManager.getCurrentTokens();
@@ -24,24 +62,27 @@ export class SmartcarClient {
     }
 
     async getVehicles(): Promise<any> {
-        const accessToken = await this.getAccessToken();
-        if (!accessToken) {
-            throw new Error('Access token not available');
-        }
-
-        const response = await fetch('https://api.smartcar.com/v2.0/vehicles', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
+        return this.circuitBreaker.execute(async () => {
+            const accessToken = await this.getAccessToken();
+            if (!accessToken) {
+                throw new Error('Access token not available');
             }
+
+            const response = await fetch('https://api.smartcar.com/v2.0/vehicles', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                signal: AbortSignal.timeout(10000) // 10 second timeout
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch vehicles: ${response.status} ${response.statusText}`);
+            }
+
+            return response.json();
         });
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch vehicles: ${response.statusText}`);
-        }
-
-        return response.json();
     }
 
     async getVehicleLocation(vehicleId: string): Promise<any> {

@@ -37,11 +37,16 @@ router.get('/connect', (req, res) => {
 
 router.get('/', async (req, res) => {
     try {
+        console.log('🚗 Attempting to fetch vehicles...');
         const vehicles = await smartcarClient.getVehicles();
+        console.log('✅ Vehicles fetched successfully:', vehicles);
         res.json(vehicles);
     } catch (error) {
-        console.error('Error fetching vehicles:', error);
-        res.status(500).json({ error: 'Failed to fetch vehicles' });
+        console.error('❌ Error fetching vehicles:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch vehicles',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 });
 
@@ -58,22 +63,80 @@ router.get('/locations', async (req, res) => {
 router.get('/:vehicleId/location', async (req, res) => {
     try {
         const { vehicleId } = req.params;
+        
+        // Validate vehicle ID format
+        if (!vehicleId || vehicleId.length < 10) {
+            return res.status(400).json({ 
+                error: 'Invalid vehicle ID format',
+                details: 'Vehicle ID must be a valid UUID'
+            });
+        }
+        
         const location = await smartcarClient.getVehicleLocation(vehicleId);
         res.json(location);
     } catch (error) {
         console.error('Error fetching vehicle location:', error);
-        res.status(500).json({ error: 'Failed to fetch vehicle location' });
+        
+        // Better error handling based on error type
+        if (error instanceof Error) {
+            if (error.message.includes('Unauthorized') || error.message.includes('401')) {
+                return res.status(401).json({ 
+                    error: 'Authentication failed',
+                    details: 'Vehicle access token may be expired'
+                });
+            }
+            if (error.message.includes('Not Found') || error.message.includes('404')) {
+                return res.status(404).json({ 
+                    error: 'Vehicle not found',
+                    details: 'Vehicle ID does not exist or is not accessible'
+                });
+            }
+            if (error.message.includes('Too Many Requests') || error.message.includes('429')) {
+                return res.status(429).json({ 
+                    error: 'Rate limit exceeded',
+                    details: 'Too many requests. Please try again later.'
+                });
+            }
+        }
+        
+        res.status(500).json({ 
+            error: 'Failed to fetch vehicle location',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 });
 
 router.get('/:vehicleId/info', async (req, res) => {
     try {
         const { vehicleId } = req.params;
+        
+        // Validate vehicle ID format
+        if (!vehicleId || vehicleId.length < 10) {
+            return res.status(400).json({ 
+                error: 'Invalid vehicle ID format',
+                details: 'Vehicle ID must be a valid UUID'
+            });
+        }
+        
         const info = await smartcarClient.getVehicleInfo(vehicleId);
         res.json(info);
     } catch (error) {
         console.error('Error fetching vehicle info:', error);
-        res.status(500).json({ error: 'Failed to fetch vehicle info' });
+        
+        // Better error handling
+        if (error instanceof Error) {
+            if (error.message.includes('Unauthorized') || error.message.includes('401')) {
+                return res.status(401).json({ error: 'Authentication failed' });
+            }
+            if (error.message.includes('Not Found') || error.message.includes('404')) {
+                return res.status(404).json({ error: 'Vehicle not found' });
+            }
+        }
+        
+        res.status(500).json({ 
+            error: 'Failed to fetch vehicle info',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 });
 
@@ -112,18 +175,32 @@ router.get('/debug', async (req, res) => {
 
 router.get('/with-names', async (req, res) => {
     try {
-        // Clear geocoding cache to ensure fresh addresses
-        geocodingService.clearCache();
+        // Don't clear cache on every request - only clear if explicitly requested
+        if (req.query.clearCache === 'true') {
+            geocodingService.clearCache();
+        }
         
         const vehicles = await smartcarClient.getVehicles();
-        const vehiclesWithNames = await Promise.all(
+        
+        // Process all vehicles in parallel with better error handling
+        const vehiclesWithNames = await Promise.allSettled(
             vehicles.vehicles.map(async (vehicleId: string) => {
                 try {
-                    const [location, battery, charge] = await Promise.all([
+                    // Parallel API calls with timeouts
+                    const [location, battery, charge] = await Promise.allSettled([
                         smartcarClient.getVehicleLocation(vehicleId),
-                        smartcarClient.getVehicleBattery(vehicleId).catch(() => null),
-                        smartcarClient.getVehicleCharge(vehicleId).catch(() => null)
+                        smartcarClient.getVehicleBattery(vehicleId),
+                        smartcarClient.getVehicleCharge(vehicleId)
                     ]);
+                    
+                    // Extract results or use fallbacks
+                    const locationData = location.status === 'fulfilled' ? location.value : null;
+                    const batteryData = battery.status === 'fulfilled' ? battery.value : null;
+                    const chargeData = charge.status === 'fulfilled' ? charge.value : null;
+                    
+                    if (!locationData) {
+                        throw new Error('Failed to get vehicle location');
+                    }
                     
                     const name = vehicleNaming.setVehicleName(vehicleId);
                     
@@ -135,24 +212,24 @@ router.get('/with-names', async (req, res) => {
                     
                     const vehicleType = vehicleTypes[name] || { model: 'F-150 Lightning', year: '2024' };
                     
-                    // Get street address
-                    const address = await geocodingService.getAddress(location.latitude, location.longitude);
+                    // Get street address (with caching)
+                    const address = await geocodingService.getAddress(locationData.latitude, locationData.longitude);
                     
-                    // Combine battery and charging data
-                    const batteryData = battery || { percentRemaining: Math.floor(Math.random() * 40) + 60 };
-                    const chargeData = charge || { isPluggedIn: false, state: 'NOT_CHARGING' };
+                    // Combine battery and charging data with better fallbacks
+                    const finalBatteryData = batteryData || { percentRemaining: Math.floor(Math.random() * 40) + 60 };
+                    const finalChargeData = chargeData || { isPluggedIn: false, state: 'NOT_CHARGING' };
                     
                     return {
                         id: vehicleId,
                         name,
                         location: {
-                            ...location,
+                            ...locationData,
                             address
                         },
                         battery: {
-                            ...batteryData,
-                            isPluggedIn: chargeData.isPluggedIn || false,
-                            isCharging: chargeData.state === 'CHARGING' || chargeData.isPluggedIn
+                            ...finalBatteryData,
+                            isPluggedIn: finalChargeData.isPluggedIn || false,
+                            isCharging: finalChargeData.state === 'CHARGING' || finalChargeData.isPluggedIn
                         },
                         make: 'Ford',
                         model: vehicleType.model,
@@ -164,16 +241,39 @@ router.get('/with-names', async (req, res) => {
                     return {
                         id: vehicleId,
                         name,
-                        error: 'Failed to fetch vehicle data'
+                        error: 'Failed to fetch vehicle data',
+                        make: 'Ford',
+                        model: 'Unknown',
+                        year: '2024'
                     };
                 }
             })
         );
         
-        res.json({ vehicles: vehiclesWithNames });
+        // Extract successful results and log failures
+        const results = vehiclesWithNames.map((result, index) => {
+            if (result.status === 'fulfilled') {
+                return result.value;
+            } else {
+                console.error(`Vehicle ${vehicles.vehicles[index]} processing failed:`, result.reason);
+                return {
+                    id: vehicles.vehicles[index],
+                    name: vehicleNaming.setVehicleName(vehicles.vehicles[index]),
+                    error: 'Vehicle data unavailable',
+                    make: 'Ford',
+                    model: 'Unknown',
+                    year: '2024'
+                };
+            }
+        });
+        
+        res.json({ vehicles: results });
     } catch (error) {
         console.error('Error fetching vehicles with names:', error);
-        res.status(500).json({ error: 'Failed to fetch vehicles with names' });
+        res.status(500).json({ 
+            error: 'Failed to fetch vehicles with names',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 });
 

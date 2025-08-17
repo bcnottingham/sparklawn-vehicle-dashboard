@@ -14,7 +14,52 @@ dotenv.config();
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000');
 
+// Rate limiting middleware
+const rateLimit = {
+  windowMs: 60 * 1000, // 1 minute
+  requests: new Map(),
+  
+  middleware: (req: any, res: any, next: any) => {
+    const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    const windowStart = now - rateLimit.windowMs;
+    
+    // Clean old entries
+    for (const [ip, timestamps] of rateLimit.requests.entries()) {
+      const validTimestamps = timestamps.filter((t: number) => t > windowStart);
+      if (validTimestamps.length === 0) {
+        rateLimit.requests.delete(ip);
+      } else {
+        rateLimit.requests.set(ip, validTimestamps);
+      }
+    }
+    
+    // Check current IP
+    const clientRequests = rateLimit.requests.get(clientIP) || [];
+    const recentRequests = clientRequests.filter((t: number) => t > windowStart);
+    
+    // API endpoints have stricter limits
+    const isAPIEndpoint = req.path.startsWith('/vehicles') || req.path.startsWith('/auth');
+    const limit = isAPIEndpoint ? 30 : 100; // 30 API calls or 100 regular requests per minute
+    
+    if (recentRequests.length >= limit) {
+      return res.status(429).json({
+        error: 'Rate limit exceeded',
+        details: `Maximum ${limit} requests per minute allowed`,
+        retryAfter: Math.ceil((Math.min(...recentRequests) + rateLimit.windowMs - now) / 1000)
+      });
+    }
+    
+    // Add current request
+    recentRequests.push(now);
+    rateLimit.requests.set(clientIP, recentRequests);
+    
+    next();
+  }
+};
+
 // Middleware
+app.use(rateLimit.middleware);
 app.use(bodyParser.json());
 app.use(express.static('src/public'));
 
