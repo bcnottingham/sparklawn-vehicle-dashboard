@@ -156,9 +156,26 @@ router.get('/jobber/status', async (req, res) => {
         }
 
         // Debug token info
+        console.log('=== JOBBER TOKEN DEBUG ===');
         console.log('Token length:', accessToken.length);
-        console.log('Token starts with:', accessToken.substring(0, 20));
-        console.log('Token ends with:', accessToken.substring(accessToken.length - 20));
+        console.log('Token starts with:', accessToken.substring(0, 30));
+        console.log('Token ends with:', accessToken.substring(accessToken.length - 30));
+        console.log('Has whitespace:', /\s/.test(accessToken));
+        console.log('All env vars with JOBBER:', Object.keys(process.env).filter(k => k.includes('JOBBER')));
+        
+        // Try to decode JWT to check expiration
+        try {
+            const tokenParts = accessToken.split('.');
+            if (tokenParts.length === 3) {
+                const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+                console.log('Token exp:', payload.exp);
+                console.log('Current time:', Math.floor(Date.now() / 1000));
+                console.log('Time until expiry:', payload.exp - Math.floor(Date.now() / 1000), 'seconds');
+            }
+        } catch (e) {
+            console.log('Failed to decode JWT:', e instanceof Error ? e.message : 'Unknown error');
+        }
+        console.log('========================');
 
         const testQuery = `
             query {
