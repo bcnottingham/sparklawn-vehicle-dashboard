@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SparkLawn Vehicle Locations</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/modern-styles.css">
     <link rel="stylesheet" href="/battery-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -24,20 +24,44 @@
         <div class="map-container">
             <div id="map"></div>
             <div class="map-controls">
-                <button id="refresh-btn" class="btn-primary">🔄 Refresh Locations</button>
-                <button id="center-btn" class="btn-secondary">📍 Center All</button>
+                <button id="refresh-btn" class="btn btn-primary">🔄 Refresh</button>
+                <button id="center-btn" class="btn btn-secondary">📍 Center All</button>
             </div>
         </div>
         
         <div class="sidebar">
-            <div id="fleet-overview" class="fleet-panel">
-                <!-- Fleet battery overview will be inserted here -->
+            <div id="fleet-overview" class="fleet-panel fleet-overview">
+                <h2>⚡ Fleet Overview</h2>
+                <div class="fleet-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-vehicles">0</div>
+                        <div class="stat-label">Total Vehicles</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="vehicles-online">0</div>
+                        <div class="stat-label">Online</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avg-battery">0%</div>
+                        <div class="stat-label">Avg Battery</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="vehicles-charging">0</div>
+                        <div class="stat-label">Charging</div>
+                    </div>
+                </div>
+                <div id="data-sources" class="data-sources">
+                    <!-- Data source indicators will be inserted here -->
+                </div>
             </div>
             
             <div class="vehicle-panel">
                 <h2>🚛 Vehicle Fleet</h2>
                 <div id="vehicle-list">
-                    <!-- Vehicle cards with battery icons will be inserted here -->
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <span>Loading vehicles...</span>
+                    </div>
                 </div>
             </div>
             

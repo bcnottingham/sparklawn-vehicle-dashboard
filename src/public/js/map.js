@@ -118,12 +118,56 @@ function updateVehicleMarkers(vehicleLocations) {
 
     // Update vehicle list in sidebar
     updateVehicleList(vehicleLocations);
+    updateFleetOverview(vehicleLocations);
     updateLastUpdate();
 }
 
 // Update vehicle count display
 function updateVehicleCount() {
     document.getElementById('vehicle-count').textContent = `${vehicles.length} vehicles online`;
+}
+
+// Update fleet overview statistics
+function updateFleetOverview(vehicleLocations) {
+    const totalVehicles = vehicleLocations.length;
+    const onlineVehicles = vehicleLocations.filter(v => v.location).length;
+    const chargingVehicles = vehicleLocations.filter(v => v.battery?.isCharging).length;
+    
+    // Calculate average battery percentage
+    const batteriesWithData = vehicleLocations.filter(v => v.battery?.percentRemaining > 0);
+    const avgBattery = batteriesWithData.length > 0 
+        ? Math.round(batteriesWithData.reduce((sum, v) => sum + v.battery.percentRemaining, 0) / batteriesWithData.length)
+        : 0;
+    
+    // Update DOM elements
+    document.getElementById('total-vehicles').textContent = totalVehicles;
+    document.getElementById('vehicles-online').textContent = onlineVehicles;
+    document.getElementById('avg-battery').textContent = `${avgBattery}%`;
+    document.getElementById('vehicles-charging').textContent = chargingVehicles;
+    
+    // Update data sources indicators
+    updateDataSources(vehicleLocations);
+}
+
+// Update data source indicators
+function updateDataSources(vehicleLocations) {
+    const dataSourcesContainer = document.getElementById('data-sources');
+    const sources = {};
+    
+    vehicleLocations.forEach(vehicle => {
+        const source = vehicle.battery?._dataSource || 'unknown';
+        sources[source] = (sources[source] || 0) + 1;
+    });
+    
+    let html = '<div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">';
+    
+    Object.entries(sources).forEach(([source, count]) => {
+        const className = `data-source-${source.replace('-', '')}`;
+        html += `<span class="data-source-indicator ${className}">${source}: ${count}</span>`;
+    });
+    
+    html += '</div>';
+    dataSourcesContainer.innerHTML = html;
 }
 
 // Update last update time
@@ -136,6 +180,17 @@ function updateLastUpdate() {
 // Update vehicle list in sidebar
 function updateVehicleList(vehicleLocations) {
     const vehicleList = document.getElementById('vehicle-list');
+    
+    if (vehicleLocations.length === 0) {
+        vehicleList.innerHTML = `
+            <div class="error-state">
+                <h4>No Vehicles Available</h4>
+                <p>Check your connection and try refreshing</p>
+            </div>
+        `;
+        return;
+    }
+
     vehicleList.innerHTML = '';
 
     vehicleLocations.forEach(vehicle => {
@@ -143,31 +198,50 @@ function updateVehicleList(vehicleLocations) {
         const lng = vehicle.location?.longitude || vehicle.longitude;
         const vehicleName = vehicle.name || `Vehicle ${vehicle.id.substring(0, 8)}`;
         const vehicleModel = vehicle.model || 'Unknown';
+        const vehicleYear = vehicle.year || '';
         const batteryPercent = vehicle.battery?.percentRemaining || 0;
-        const address = vehicle.location?.address || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        const isCharging = vehicle.battery?.isCharging || false;
+        const isPluggedIn = vehicle.battery?.isPluggedIn || false;
+        const dataSource = vehicle.battery?._dataSource || 'unknown';
+        const isMockData = vehicle.battery?._isMockData || false;
+        const address = vehicle.location?.address || (lat && lng ? `${lat.toFixed(4)}, ${lng.toFixed(4)}` : 'Location unavailable');
         
         function getBatteryClass(percent) {
-            if (percent <= 25) return 'low';
-            if (percent <= 60) return 'medium';
+            if (percent <= 35) return 'low';
+            if (percent <= 70) return 'medium';
             return 'high';
         }
+        
+        // Create charging indicator
+        let chargingIndicator = '';
+        if (isCharging) {
+            chargingIndicator = '<span class="charging-indicator charging">⚡ Charging</span>';
+        } else if (isPluggedIn) {
+            chargingIndicator = '<span class="charging-indicator">🔌 Plugged In</span>';
+        }
+        
+        // Data source indicator
+        const sourceClass = `data-source-${dataSource.replace('-', '')}`;
+        const sourceIndicator = `<span class="data-source-indicator ${sourceClass}">${dataSource}</span>`;
         
         const vehicleItem = document.createElement('div');
         vehicleItem.className = 'vehicle-item';
         vehicleItem.innerHTML = `
             <div class="vehicle-info">
                 <h4>${vehicleName}</h4>
-                <p>${vehicleModel}</p>
+                <p>${vehicleYear} ${vehicleModel}</p>
                 <div class="battery-display">
                     <div class="battery-icon">
                         <div class="battery-level ${getBatteryClass(batteryPercent)}" 
                              style="width: ${batteryPercent}%"></div>
                     </div>
                     <span class="battery-text">${batteryPercent}%</span>
+                    ${chargingIndicator}
                 </div>
                 <p class="address-text">${address}</p>
+                <div style="margin-top: 0.5rem;">${sourceIndicator}</div>
             </div>
-            <button onclick="centerOnVehicle('${vehicle.id}')">📍</button>
+            <button onclick="centerOnVehicle('${vehicle.id}')" title="Center on map">📍</button>
         `;
         vehicleList.appendChild(vehicleItem);
     });
@@ -201,11 +275,11 @@ async function selectVehicle(vehicleId, vehicleName) {
             <div class="selected-vehicle">
                 <h4>${displayName}</h4>
                 <div class="detail-group">
-                    <label>Model:</label>
+                    <label>Model</label>
                     <p>${vehicleYear} Ford ${vehicleModel}</p>
                 </div>
                 <div class="detail-group">
-                    <label>Current Charge:</label>
+                    <label>Current Charge</label>
                     <div class="battery-display">
                         <div class="battery-icon">
                             <div class="battery-level ${getBatteryClass(batteryPercent)}" 
@@ -215,14 +289,14 @@ async function selectVehicle(vehicleId, vehicleName) {
                     </div>
                 </div>
                 <div class="detail-group">
-                    <label>Location:</label>
+                    <label>Location</label>
                     <p>${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}</p>
                 </div>
                 <div class="detail-group">
-                    <label>Status:</label>
+                    <label>Status</label>
                     <p><span class="status-online">🟢 Online</span></p>
                 </div>
-                <button onclick="centerOnVehicle('${vehicleId}')" class="btn-primary">📍 Center on Map</button>
+                <button onclick="centerOnVehicle('${vehicleId}')" class="btn btn-primary">📍 Center on Map</button>
             </div>
         `;
     } catch (error) {
