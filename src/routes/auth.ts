@@ -267,4 +267,118 @@ router.get('/jobber/mongodb-test', async (req, res) => {
     }
 });
 
+// Smartcar OAuth callback
+router.get('/smartcar/callback', async (req, res) => {
+    const { code, state, error } = req.query;
+
+    if (error) {
+        return res.status(400).json({ 
+            error: 'OAuth authorization failed', 
+            details: error 
+        });
+    }
+
+    if (state !== 'sparklawn-connect') {
+        return res.status(400).json({ 
+            error: 'Invalid state parameter' 
+        });
+    }
+
+    if (!code) {
+        return res.status(400).json({ 
+            error: 'Authorization code not provided' 
+        });
+    }
+
+    try {
+        // Exchange authorization code for access token
+        const clientId = process.env.SMARTCAR_CLIENT_ID;
+        const clientSecret = process.env.SMARTCAR_CLIENT_SECRET;
+        const redirectUri = process.env.SMARTCAR_REDIRECT_URI || 'https://sparklawn-vehicle-dashboard.onrender.com/auth/smartcar/callback';
+
+        const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+        
+        const tokenResponse = await fetch('https://auth.smartcar.com/oauth/token', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Basic ${auth}`,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+                grant_type: 'authorization_code',
+                code: code as string,
+                redirect_uri: redirectUri
+            })
+        });
+
+        if (!tokenResponse.ok) {
+            const errorData = await tokenResponse.text();
+            throw new Error(`Token exchange failed: ${tokenResponse.status} ${errorData}`);
+        }
+
+        const tokens = await tokenResponse.json();
+
+        // Display tokens for manual configuration (and auto-save to MongoDB)
+        const { tokenManager } = await import('../services/tokenManager');
+        
+        try {
+            // Save to MongoDB automatically
+            const tokenData = {
+                clientId: clientId!,
+                clientSecret: clientSecret!,
+                accessToken: tokens.access_token,
+                refreshToken: tokens.refresh_token,
+                expiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+                lastUpdated: new Date()
+            };
+            
+            await tokenManager.saveTokens(tokenData);
+            console.log('✅ Smartcar tokens saved to MongoDB automatically');
+        } catch (dbError) {
+            console.error('⚠️ Failed to save tokens to MongoDB:', dbError);
+        }
+
+        // Display success page
+        res.send(`
+            <html>
+                <head>
+                    <title>Smartcar Connection Success</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+                        .success { color: #28a745; }
+                        .token-box { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+                    </style>
+                </head>
+                <body>
+                    <h1 class="success">✅ Vehicles Connected Successfully!</h1>
+                    <p>Your SparkLawn Fleet Tracker is now connected to your Ford vehicles.</p>
+                    
+                    <h3>🚗 Connection Details:</h3>
+                    <div class="token-box">
+                        <strong>Access Token:</strong> ${tokens.access_token.substring(0, 20)}...<br>
+                        <strong>Expires in:</strong> ${tokens.expires_in} seconds (${Math.round(tokens.expires_in / 3600)} hours)<br>
+                        <strong>Auto-saved to MongoDB:</strong> ✅ Yes
+                    </div>
+                    
+                    <h3>🚀 Next Steps:</h3>
+                    <ol>
+                        <li>Tokens are automatically saved to your database</li>
+                        <li>Return to your dashboard to see your vehicles</li>
+                        <li>Your vehicles will now appear on the map</li>
+                    </ol>
+                    
+                    <p><a href="/">← Back to Dashboard</a></p>
+                </body>
+            </html>
+        `);
+
+    } catch (error) {
+        console.error('Smartcar OAuth callback error:', error);
+        res.status(500).json({ 
+            error: 'Failed to exchange authorization code for tokens',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
 export default router;

@@ -6,6 +6,35 @@ import { geocodingService } from '../services/geocoding';
 const router = Router();
 const smartcarClient = new SmartcarClient();
 
+// Smartcar Connect URL for reconnecting vehicles
+router.get('/connect', (req, res) => {
+    const clientId = process.env.SMARTCAR_CLIENT_ID;
+    const redirectUri = process.env.SMARTCAR_REDIRECT_URI || 'https://sparklawn-vehicle-dashboard.onrender.com/auth/smartcar/callback';
+    
+    if (!clientId) {
+        return res.status(400).json({ error: 'Smartcar client ID not configured' });
+    }
+
+    const scope = ['read_vehicle_info', 'read_location', 'read_odometer'].join(' ');
+    const connectUrl = `https://connect.smartcar.com/oauth/authorize?` +
+        `response_type=code&` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `scope=${encodeURIComponent(scope)}&` +
+        `state=sparklawn-connect`;
+
+    res.json({
+        message: 'Visit this URL to reconnect your vehicles',
+        connectUrl: connectUrl,
+        instructions: [
+            '1. Click the URL below to open Smartcar Connect',
+            '2. Log in with your Ford account',
+            '3. Authorize SparkLawn to access your vehicles',
+            '4. You will be redirected back with fresh tokens'
+        ]
+    });
+});
+
 router.get('/', async (req, res) => {
     try {
         const vehicles = await smartcarClient.getVehicles();
