@@ -35,6 +35,19 @@ export class NotificationService {
     }
 
     async sendGeofenceAlert(event: GeofenceEvent, zone: GeofenceZone): Promise<void> {
+        // Only send notifications for meaningful events
+        // ARRIVED/DEPARTED for customer sites, ENTER/EXIT for HQ and suppliers
+        const shouldNotify = (
+            (event.eventType === 'ARRIVED' || event.eventType === 'DEPARTED') && zone.type === 'customer'
+        ) || (
+            (event.eventType === 'ENTER' || event.eventType === 'EXIT') && (zone.type === 'shop' || zone.type === 'supplier')
+        );
+        
+        if (!shouldNotify) {
+            console.log(`Skipping notification for ${event.eventType} at ${zone.type} zone: ${zone.name}`);
+            return;
+        }
+        
         const message = this.formatGeofenceMessage(event, zone);
         
         for (const channel of this.channels) {
@@ -42,6 +55,7 @@ export class NotificationService {
                 switch (channel.type) {
                     case 'slack':
                         await this.sendSlackMessage(message, channel.config);
+                        console.log(`✅ Sent ${event.eventType} notification to Slack for ${event.vehicleName} at ${zone.name}`);
                         break;
                     case 'email':
                         await this.sendEmailNotification(message, channel.config);
@@ -58,23 +72,58 @@ export class NotificationService {
 
     private formatGeofenceMessage(event: GeofenceEvent, zone: GeofenceZone): any {
         const emoji = this.getZoneEmoji(zone.type);
-        const action = event.eventType === 'ENTER' ? 'arrived at' : 'left';
-        const color = event.eventType === 'ENTER' ? 'good' : '#439FE0';
-        
-        let title = `🚛 ${event.vehicleName} ${action} ${zone.name}`;
+        let title: string;
+        let color: string;
         let details = `Location: ${zone.address}`;
         
-        if (event.eventType === 'EXIT' && event.duration) {
-            details += `\nTime spent: ${event.duration} minutes`;
+        switch (event.eventType) {
+            case 'ARRIVED':
+                title = `🎯 ${event.vehicleName} arrived and parked at ${zone.name}`;
+                color = 'good';
+                details += '\n🚗 Vehicle stopped - work likely started';
+                break;
+                
+            case 'DEPARTED':
+                title = `✅ ${event.vehicleName} finished work at ${zone.name}`;
+                color = '#36a64f';
+                if (event.workDuration) {
+                    const hours = Math.floor(event.workDuration / 60);
+                    const minutes = event.workDuration % 60;
+                    const timeStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes} minutes`;
+                    details += `\n⏱️ Work time: ${timeStr}`;
+                }
+                details += '\n🚛 Vehicle moving again';
+                break;
+                
+            case 'ENTER':
+                title = `📍 ${event.vehicleName} entered ${zone.name}`;
+                color = '#439FE0';
+                details += '\n👀 Monitoring for parking...';
+                break;
+                
+            case 'EXIT':
+                title = `🚪 ${event.vehicleName} left ${zone.name}`;
+                color = '#ff9900';
+                if (event.duration) {
+                    details += `\nTotal time in zone: ${event.duration} minutes`;
+                }
+                break;
         }
 
         // Add context based on zone type
         if (zone.type === 'customer' && zone.clientInfo) {
-            details += `\nClient: ${zone.clientInfo.name}`;
+            details += `\n👤 Client: ${zone.clientInfo.name}`;
         } else if (zone.type === 'supplier') {
-            details += `\nSupplier run`;
+            details += `\n🏪 Supplier visit`;
         } else if (zone.type === 'shop') {
-            details += event.eventType === 'ENTER' ? '\nReturned to base' : '\nDeparted for jobs';
+            details += event.eventType === 'ENTER' ? '\n🏢 Returned to HQ' : '\n🏢 Left HQ for jobs';
+        }
+        
+        // Add profitability context for work sessions
+        if (event.eventType === 'DEPARTED' && event.workDuration && zone.type === 'customer') {
+            const efficiency = event.workDuration >= 30 ? '💚 Good session' : 
+                             event.workDuration >= 15 ? '🟡 Short session' : '🔴 Very short session';
+            details += `\n${efficiency}`;
         }
 
         return {
@@ -99,7 +148,7 @@ export class NotificationService {
                             short: true
                         }
                     ],
-                    footer: 'SparkLawn Fleet Tracker',
+                    footer: 'SparkLawn Fleet Tracker - Job Site Monitoring',
                     footer_icon: 'https://cdn-icons-png.flaticon.com/512/3448/3448339.png'
                 }
             ]

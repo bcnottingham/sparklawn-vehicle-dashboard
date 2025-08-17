@@ -105,11 +105,13 @@ router.get('/vehicle-zones', async (req, res) => {
         for (const vehicleId of vehicles.vehicles) {
             const vehicleName = vehicleNaming.setVehicleName(vehicleId);
             const currentZones = geofencingService.getVehicleCurrentZones(vehicleId);
+            const workStatus = geofencingService.getVehicleWorkStatus(vehicleId);
             
             vehicleZones.push({
                 vehicleId,
                 vehicleName,
-                zones: currentZones
+                zones: currentZones,
+                workStatus: workStatus
             });
         }
 
@@ -117,6 +119,41 @@ router.get('/vehicle-zones', async (req, res) => {
     } catch (error) {
         console.error('Error getting vehicle zones:', error);
         res.status(500).json({ error: 'Failed to get vehicle zones' });
+    }
+});
+
+// Get active job sites (vehicles currently working)
+router.get('/active-jobs', (req, res) => {
+    try {
+        const activeJobs = geofencingService.getActiveJobSites();
+        
+        const jobsWithDuration = activeJobs.map(job => {
+            const vehiclesWithDuration = job.vehicles.map(vehicle => {
+                const workDuration = vehicle.arrivedAt ? 
+                    Math.round((new Date().getTime() - vehicle.arrivedAt.getTime()) / (1000 * 60)) : 0;
+                    
+                return {
+                    vehicleId: vehicle.vehicleId,
+                    arrivedAt: vehicle.arrivedAt,
+                    workDuration,
+                    isParked: vehicle.isCurrentlyParked
+                };
+            });
+            
+            return {
+                zone: job.zone,
+                vehicles: vehiclesWithDuration,
+                totalVehicles: vehiclesWithDuration.length
+            };
+        });
+        
+        res.json({ 
+            activeJobs: jobsWithDuration,
+            totalActiveJobs: jobsWithDuration.length
+        });
+    } catch (error) {
+        console.error('Error getting active jobs:', error);
+        res.status(500).json({ error: 'Failed to get active jobs' });
     }
 });
 

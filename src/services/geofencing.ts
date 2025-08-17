@@ -24,13 +24,14 @@ export interface GeofenceEvent {
     vehicleName: string;
     zoneId: string;
     zoneName: string;
-    eventType: 'ENTER' | 'EXIT';
+    eventType: 'ENTER' | 'EXIT' | 'ARRIVED' | 'DEPARTED';
     timestamp: Date;
     location: {
         latitude: number;
         longitude: number;
     };
-    duration?: number; // minutes spent in zone (for EXIT events)
+    duration?: number; // minutes spent in zone (for EXIT/DEPARTED events)
+    workDuration?: number; // minutes parked at location (for DEPARTED events)
 }
 
 export interface VehicleLocation {
@@ -39,11 +40,28 @@ export interface VehicleLocation {
     latitude: number;
     longitude: number;
     timestamp: Date;
+    isMoving?: boolean; // true if vehicle is moving, false if stationary
+}
+
+export interface VehicleStatus {
+    vehicleId: string;
+    zoneId: string;
+    enteredAt: Date;
+    arrivedAt?: Date; // when vehicle stopped moving in zone
+    departedAt?: Date; // when vehicle started moving to leave
+    lastMovingCheck: Date;
+    isCurrentlyParked: boolean;
 }
 
 export class GeofencingService {
     private zones: GeofenceZone[] = [];
     private vehicleZoneHistory: Map<string, { zoneId: string; enteredAt: Date }[]> = new Map();
+    private vehicleStatus: Map<string, VehicleStatus[]> = new Map(); // Track detailed status per vehicle
+    private vehicleMovementHistory: Map<string, { location: { lat: number; lng: number }; timestamp: Date }[]> = new Map();
+    
+    // Configuration
+    private readonly STATIONARY_THRESHOLD_MINUTES = 3; // Consider parked after 3 minutes
+    private readonly MOVEMENT_THRESHOLD_METERS = 20; // Movement detection threshold
     
     constructor() {
         this.initializeStaticZones();
@@ -300,6 +318,33 @@ export class GeofencingService {
     getVehicleCurrentZones(vehicleId: string): GeofenceZone[] {
         const history = this.vehicleZoneHistory.get(vehicleId) || [];
         return history.map(h => this.zones.find(z => z.id === h.zoneId)).filter(Boolean) as GeofenceZone[];
+    }
+    
+    getVehicleWorkStatus(vehicleId: string): VehicleStatus[] {
+        return this.vehicleStatus.get(vehicleId) || [];
+    }
+    
+    // Get active job sites (where vehicles are currently parked and working)
+    getActiveJobSites(): { zone: GeofenceZone; vehicles: VehicleStatus[] }[] {
+        const activeJobs: { zone: GeofenceZone; vehicles: VehicleStatus[] }[] = [];
+        
+        for (const [vehicleId, statuses] of this.vehicleStatus.entries()) {
+            for (const status of statuses) {
+                if (status.isCurrentlyParked && status.arrivedAt) {
+                    const zone = this.zones.find(z => z.id === status.zoneId);
+                    if (zone && zone.type === 'customer') {
+                        let existingJob = activeJobs.find(job => job.zone.id === zone.id);
+                        if (!existingJob) {
+                            existingJob = { zone, vehicles: [] };
+                            activeJobs.push(existingJob);
+                        }
+                        existingJob.vehicles.push(status);
+                    }
+                }
+            }
+        }
+        
+        return activeJobs;
     }
 }
 
