@@ -172,21 +172,28 @@ export class SmartcarClient {
         });
 
         if (!response.ok) {
+            console.warn(`⚠️ Battery API failed for vehicle ${vehicleId}: ${response.status} ${response.statusText}`);
+            console.warn('🎭 RETURNING MOCK BATTERY DATA');
             // If battery endpoint fails, return mock data for electric vehicles
-            return {
+            const mockData = {
                 percentRemaining: Math.floor(Math.random() * 40) + 60, // 60-100%
                 range: Math.floor(Math.random() * 150) + 200, // 200-350 miles
-                isPluggedIn: Math.random() > 0.7 // 30% chance of being plugged in
+                isPluggedIn: Math.random() > 0.7, // 30% chance of being plugged in
+                _isMockData: true
             };
+            console.warn('🎭 Mock battery data:', mockData);
+            return mockData;
         }
 
         const batteryData = await response.json();
+        console.log(`✅ Real battery data for vehicle ${vehicleId}:`, batteryData);
         
         // Ensure percentRemaining is a whole number (convert from decimal if needed)
         if (batteryData.percentRemaining && batteryData.percentRemaining < 1) {
             batteryData.percentRemaining = Math.round(batteryData.percentRemaining * 100);
         }
         
+        batteryData._isMockData = false;
         return batteryData;
     }
 
@@ -205,14 +212,22 @@ export class SmartcarClient {
         });
 
         if (!response.ok) {
+            console.warn(`⚠️ Charge API failed for vehicle ${vehicleId}: ${response.status} ${response.statusText}`);
+            console.warn('🎭 RETURNING MOCK CHARGE DATA');
             // If charge endpoint fails, return mock charging data
-            return {
+            const mockData = {
                 isPluggedIn: Math.random() > 0.7, // 30% chance of being plugged in
-                state: Math.random() > 0.5 ? 'CHARGING' : 'NOT_CHARGING'
+                state: Math.random() > 0.5 ? 'CHARGING' : 'NOT_CHARGING',
+                _isMockData: true
             };
+            console.warn('🎭 Mock charge data:', mockData);
+            return mockData;
         }
 
-        return response.json();
+        const chargeData = await response.json();
+        console.log(`✅ Real charge data for vehicle ${vehicleId}:`, chargeData);
+        chargeData._isMockData = false;
+        return chargeData;
     }
 }
 

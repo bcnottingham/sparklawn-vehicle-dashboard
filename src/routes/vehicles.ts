@@ -140,6 +140,69 @@ router.get('/:vehicleId/info', async (req, res) => {
     }
 });
 
+// Get battery status for a specific vehicle
+router.get('/:vehicleId/battery', async (req, res) => {
+    try {
+        const { vehicleId } = req.params;
+        
+        // Validate vehicle ID format
+        if (!vehicleId || vehicleId.length < 10) {
+            return res.status(400).json({ 
+                error: 'Invalid vehicle ID format',
+                details: 'Vehicle ID must be a valid UUID'
+            });
+        }
+        
+        console.log(`🔋 Fetching battery data for vehicle: ${vehicleId}`);
+        const battery = await smartcarClient.getVehicleBattery(vehicleId);
+        console.log(`🔋 Battery response:`, battery);
+        
+        res.json({
+            vehicleId,
+            battery,
+            timestamp: new Date().toISOString(),
+            dataSource: battery.percentRemaining >= 60 && battery.percentRemaining <= 100 ? 'possibly_mock' : 'likely_real'
+        });
+    } catch (error) {
+        console.error('Error fetching vehicle battery:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch vehicle battery',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
+// Get charging status for a specific vehicle
+router.get('/:vehicleId/charge', async (req, res) => {
+    try {
+        const { vehicleId } = req.params;
+        
+        // Validate vehicle ID format
+        if (!vehicleId || vehicleId.length < 10) {
+            return res.status(400).json({ 
+                error: 'Invalid vehicle ID format',
+                details: 'Vehicle ID must be a valid UUID'
+            });
+        }
+        
+        console.log(`⚡ Fetching charging data for vehicle: ${vehicleId}`);
+        const charge = await smartcarClient.getVehicleCharge(vehicleId);
+        console.log(`⚡ Charging response:`, charge);
+        
+        res.json({
+            vehicleId,
+            charge,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error fetching vehicle charge:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch vehicle charge',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
 router.get('/:vehicleId/diagnostics', async (req, res) => {
     try {
         const { vehicleId } = req.params;
