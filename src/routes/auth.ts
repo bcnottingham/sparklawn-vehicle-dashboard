@@ -240,4 +240,31 @@ router.get('/jobber/status', async (req, res) => {
     }
 });
 
+// Test endpoint for MongoDB token management
+router.get('/jobber/mongodb-test', async (req, res) => {
+    try {
+        const { tokenManager } = await import('../services/tokenManager');
+        
+        console.log('Testing MongoDB token retrieval...');
+        const tokens = await tokenManager.getCurrentJobberTokens();
+        
+        res.json({
+            success: true,
+            hasTokens: !!tokens,
+            tokenInfo: tokens ? {
+                hasAccessToken: !!tokens.accessToken,
+                hasRefreshToken: !!tokens.refreshToken,
+                expiresAt: tokens.expiresAt,
+                lastUpdated: tokens.lastUpdated
+            } : null
+        });
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            details: 'MongoDB token test failed'
+        });
+    }
+});
+
 export default router;
