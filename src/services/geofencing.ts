@@ -123,29 +123,14 @@ export class GeofencingService {
             const properties = await jobberClient.getAllProperties();
             
             for (const property of properties) {
-                if (property.address.latitude && property.address.longitude) {
-                    const clientName = property.client.companyName || 
-                                     `${property.client.firstName} ${property.client.lastName}`;
-                    
-                    const zone: GeofenceZone = {
-                        id: `jobber-${property.id}`,
-                        name: clientName,
-                        type: 'customer',
-                        center: {
-                            latitude: property.address.latitude,
-                            longitude: property.address.longitude
-                        },
-                        radius: 75, // 75 meter radius for customer properties
-                        address: `${property.address.street}, ${property.address.city}, ${property.address.province}`,
-                        clientInfo: {
-                            id: property.client.id,
-                            name: clientName,
-                            companyName: property.client.companyName
-                        }
-                    };
-                    
-                    this.zones.push(zone);
-                }
+                const clientName = property.client.companyName || 
+                                 `${property.client.firstName} ${property.client.lastName}`;
+                
+                const address = `${property.address.street}, ${property.address.city}, ${property.address.province}`;
+                console.log(`📋 Found Jobber property: ${clientName} at ${address}`);
+                
+                // TODO: Implement geocoding to get coordinates from address
+                console.log(`⚠️ Skipping geofence creation - need to implement geocoding for coordinates`);
             }
             
             console.log(`✅ Loaded ${properties.length} Jobber properties as geofence zones`);

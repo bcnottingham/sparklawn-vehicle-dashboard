@@ -6,8 +6,6 @@ export interface JobberProperty {
         province: string;
         postalCode: string;
         country: string;
-        latitude?: number;
-        longitude?: number;
     };
     client: {
         id: string;
@@ -15,7 +13,6 @@ export interface JobberProperty {
         lastName: string;
         companyName?: string;
     };
-    customFields?: any[];
 }
 
 export interface JobberClient {
@@ -112,18 +109,12 @@ export class JobberAPIClient {
                                 province
                                 postalCode
                                 country
-                                latitude
-                                longitude
                             }
                             client {
                                 id
                                 firstName
                                 lastName
                                 companyName
-                            }
-                            customFields {
-                                name
-                                value
                             }
                         }
                     }
@@ -173,12 +164,6 @@ export class JobberAPIClient {
                                             province
                                             postalCode
                                             country
-                                            latitude
-                                            longitude
-                                        }
-                                        customFields {
-                                            name
-                                            value
                                         }
                                     }
                                 }
@@ -214,8 +199,7 @@ export class JobberAPIClient {
                         firstName: edge.node.firstName,
                         lastName: edge.node.lastName,
                         companyName: edge.node.companyName
-                    },
-                    customFields: propEdge.node.customFields
+                    }
                 }))
             }));
             
@@ -254,8 +238,6 @@ export class JobberAPIClient {
                                     city
                                     province
                                     postalCode
-                                    latitude
-                                    longitude
                                 }
                             }
                         }
