@@ -11,15 +11,23 @@ const smartcarClient = new SmartcarClient();
 // Initialize geofencing with Jobber data
 router.post('/initialize', async (req, res) => {
     try {
-        await geofencingService.loadJobberProperties();
+        console.log('🚀 Starting geofencing initialization...');
+        const successCount = await geofencingService.loadJobberProperties();
+        const totalZones = geofencingService.getZones().length;
+        
         res.json({ 
             success: true, 
-            message: 'Geofencing initialized with Jobber properties',
-            zoneCount: geofencingService.getZones().length
+            message: `Geofencing initialized: ${successCount} customer properties geocoded successfully`,
+            customerZonesCreated: successCount,
+            totalZones: totalZones,
+            staticZones: totalZones - successCount
         });
     } catch (error) {
         console.error('Error initializing geofencing:', error);
-        res.status(500).json({ error: 'Failed to initialize geofencing' });
+        res.status(500).json({ 
+            error: 'Failed to initialize geofencing',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 });
 

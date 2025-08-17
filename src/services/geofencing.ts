@@ -1,4 +1,5 @@
 import { JobberProperty, jobberClient } from './jobberClient';
+import { geocodingService } from './geocoding';
 
 export interface GeofenceZone {
     id: string;
@@ -118,24 +119,78 @@ export class GeofencingService {
         ];
     }
 
-    async loadJobberProperties(): Promise<void> {
+    async loadJobberProperties(): Promise<number> {
         try {
             const properties = await jobberClient.getAllProperties();
+            let successCount = 0;
+            let failCount = 0;
             
+            console.log(`🏠 Processing ${properties.length} Jobber properties for geofencing...`);
+            
+            // Process properties with rate limiting (1 per second to respect Nominatim)
             for (const property of properties) {
-                const clientName = property.client.companyName || 
-                                 `${property.client.firstName} ${property.client.lastName}`;
-                
-                const address = `${property.address.street}, ${property.address.city}, ${property.address.province}`;
-                console.log(`📋 Found Jobber property: ${clientName} at ${address}`);
-                
-                // TODO: Implement geocoding to get coordinates from address
-                console.log(`⚠️ Skipping geofence creation - need to implement geocoding for coordinates`);
+                try {
+                    const clientName = property.client.companyName || 
+                                     `${property.client.firstName} ${property.client.lastName}`;
+                    
+                    const address = `${property.address.street}, ${property.address.city}, ${property.address.province}`;
+                    console.log(`📍 Geocoding: ${clientName} at ${address}`);
+                    
+                    // Get coordinates for the address
+                    const coordinates = await geocodingService.getCoordinates(address);
+                    
+                    if (coordinates) {
+                        // Create geofence zone
+                        const geofenceZone: GeofenceZone = {
+                            id: `customer-${property.id}`,
+                            name: clientName,
+                            type: 'customer',
+                            center: {
+                                latitude: coordinates.latitude,
+                                longitude: coordinates.longitude
+                            },
+                            radius: 50, // 50 meter radius for customer properties
+                            address: coordinates.formattedAddress,
+                            clientInfo: {
+                                id: property.client.id,
+                                name: clientName,
+                                companyName: property.client.companyName
+                            }
+                        };
+                        
+                        // Add to zones array (avoid duplicates)
+                        const existingIndex = this.zones.findIndex(z => z.id === geofenceZone.id);
+                        if (existingIndex >= 0) {
+                            this.zones[existingIndex] = geofenceZone;
+                        } else {
+                            this.zones.push(geofenceZone);
+                        }
+                        
+                        successCount++;
+                        console.log(`✅ Created geofence: ${clientName} (${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)})`);
+                    } else {
+                        failCount++;
+                        console.warn(`❌ Could not geocode address for ${clientName}: ${address}`);
+                    }
+                    
+                    // Rate limit: Wait 1 second between requests to respect Nominatim terms
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                } catch (error) {
+                    failCount++;
+                    console.error(`❌ Error processing property ${property.id}:`, error);
+                }
             }
             
-            console.log(`✅ Loaded ${properties.length} Jobber properties as geofence zones`);
+            console.log(`🎯 Geofencing setup complete:`);
+            console.log(`   ✅ ${successCount} customer geofences created`);
+            console.log(`   ❌ ${failCount} properties failed`);
+            console.log(`   📊 Total zones: ${this.zones.length}`);
+            
+            return successCount;
         } catch (error) {
             console.error('❌ Failed to load Jobber properties:', error);
+            return 0;
         }
     }
 

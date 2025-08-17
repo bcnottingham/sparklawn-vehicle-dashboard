@@ -1,12 +1,19 @@
+export interface GeocodeResult {
+    latitude: number;
+    longitude: number;
+    formattedAddress: string;
+}
+
 export class GeocodingService {
-    private cache: Map<string, string> = new Map();
+    private reverseCache: Map<string, string> = new Map();
+    private forwardCache: Map<string, GeocodeResult> = new Map();
 
     async getAddress(latitude: number, longitude: number): Promise<string> {
         const key = `${latitude.toFixed(4)},${longitude.toFixed(4)}`;
         
         // Check cache first
-        if (this.cache.has(key)) {
-            return this.cache.get(key)!;
+        if (this.reverseCache.has(key)) {
+            return this.reverseCache.get(key)!;
         }
 
         try {
@@ -48,7 +55,7 @@ export class GeocodingService {
             }
 
             // Cache the result
-            this.cache.set(key, address);
+            this.reverseCache.set(key, address);
             
             return address;
 
@@ -59,9 +66,58 @@ export class GeocodingService {
         }
     }
 
+    async getCoordinates(address: string): Promise<GeocodeResult | null> {
+        const key = address.toLowerCase().trim();
+        
+        // Check cache first
+        if (this.forwardCache.has(key)) {
+            return this.forwardCache.get(key)!;
+        }
+
+        try {
+            // Use OpenStreetMap Nominatim for forward geocoding
+            const encodedAddress = encodeURIComponent(address);
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1&addressdetails=1`,
+                {
+                    headers: {
+                        'User-Agent': 'SparkLawn-Vehicle-Dashboard/1.0'
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Forward geocoding request failed');
+            }
+
+            const data = await response.json();
+            
+            if (!data || data.length === 0) {
+                console.warn(`No coordinates found for address: ${address}`);
+                return null;
+            }
+
+            const result: GeocodeResult = {
+                latitude: parseFloat(data[0].lat),
+                longitude: parseFloat(data[0].lon),
+                formattedAddress: data[0].display_name
+            };
+
+            // Cache the result
+            this.forwardCache.set(key, result);
+            
+            return result;
+
+        } catch (error) {
+            console.error('Forward geocoding error:', error);
+            return null;
+        }
+    }
+
     // Clear cache periodically to prevent memory issues
     clearCache(): void {
-        this.cache.clear();
+        this.reverseCache.clear();
+        this.forwardCache.clear();
     }
 }
 
