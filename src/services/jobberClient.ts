@@ -26,6 +26,8 @@ export interface JobberClient {
     properties: JobberProperty[];
 }
 
+import { tokenManager } from './tokenManager';
+
 export class JobberAPIClient {
     private accessToken: string | null = null;
     private apiUrl = 'https://api.getjobber.com/api/graphql';
@@ -36,79 +38,22 @@ export class JobberAPIClient {
     ) {}
 
     async authenticate(): Promise<void> {
-        // Check if current token is valid
-        const accessToken = process.env.JOBBER_ACCESS_TOKEN;
-        if (accessToken && this.isTokenValid(accessToken)) {
-            this.accessToken = accessToken;
-            return;
-        }
-
-        // Try to refresh the token
-        await this.refreshAccessToken();
-        
-        if (!this.accessToken) {
-            throw new Error('Jobber access token not available. Please complete OAuth flow.');
-        }
-    }
-
-    private isTokenValid(token: string): boolean {
         try {
-            const tokenParts = token.split('.');
-            if (tokenParts.length !== 3) return false;
+            // Get current valid tokens from MongoDB
+            const tokens = await tokenManager.getCurrentJobberTokens();
             
-            const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-            const now = Math.floor(Date.now() / 1000);
-            
-            // Check if token expires in the next 5 minutes (300 seconds buffer)
-            return payload.exp && (payload.exp - now) > 300;
-        } catch {
-            return false;
-        }
-    }
-
-    private async refreshAccessToken(): Promise<void> {
-        const refreshToken = process.env.JOBBER_REFRESH_TOKEN;
-        const clientId = process.env.JOBBER_CLIENT_ID;
-        const clientSecret = process.env.JOBBER_CLIENT_SECRET;
-
-        if (!refreshToken || !clientId || !clientSecret) {
-            console.log('Missing refresh token or credentials for Jobber token refresh');
-            return;
-        }
-
-        try {
-            const response = await fetch('https://api.getjobber.com/api/oauth/token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    grant_type: 'refresh_token',
-                    refresh_token: refreshToken,
-                    client_id: clientId,
-                    client_secret: clientSecret
-                })
-            });
-
-            if (!response.ok) {
-                console.error('Failed to refresh Jobber token:', response.status, response.statusText);
+            if (tokens) {
+                this.accessToken = tokens.accessToken;
                 return;
             }
 
-            const tokens = await response.json();
-            this.accessToken = tokens.access_token;
-            
-            console.log('✅ Jobber token refreshed successfully');
-            console.log('⚠️ Update JOBBER_ACCESS_TOKEN in environment with:', tokens.access_token);
-            
-            if (tokens.refresh_token) {
-                console.log('⚠️ Update JOBBER_REFRESH_TOKEN in environment with:', tokens.refresh_token);
-            }
-            
+            throw new Error('Jobber access token not available. Please complete OAuth flow.');
         } catch (error) {
-            console.error('Error refreshing Jobber token:', error);
+            console.error('Jobber authentication failed:', error);
+            throw error;
         }
     }
+
 
     private async makeGraphQLRequest(query: string, variables?: any): Promise<any> {
         if (!this.accessToken) {
