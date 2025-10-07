@@ -12,6 +12,11 @@ dist/
 
 # Logs
 *.log
+logs/
+logs/*.log
+logs/*.gz
+logs/*.1
+logs/*.old
 
 # Runtime data
 pids
@@ -41,3 +46,18 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Sensitive OAuth tokens
+gmail-token.json
+
+# Development cache files
+geocoding-cache.json
+
+# Uploads
+uploads/
+
+# MongoDB download
+mongodb-macos-*/
+
+# Generated documentation (keep in repo, but exclude from builds)
+# PRODUCTION_CLEANUP_REPORT.md is for reference

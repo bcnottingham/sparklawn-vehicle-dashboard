@@ -1,358 +1,291 @@
 import { Router } from 'express';
-import { SmartcarClient } from '../smartcar/smartcarClient';
 import { hybridVehicleClient } from '../services/hybridVehicleClient';
 import { vehicleNaming } from '../services/vehicleNaming';
 import { geocodingService } from '../services/geocoding';
+import { smartAlertsService } from '../services/smartAlertsService';
 
 const router = Router();
-const smartcarClient = new SmartcarClient();
 
-// Smartcar Connect URL for reconnecting vehicles
-router.get('/connect', (req, res) => {
-    const clientId = process.env.SMARTCAR_CLIENT_ID;
-    const redirectUri = process.env.SMARTCAR_REDIRECT_URI || 'https://sparklawn-vehicle-dashboard.onrender.com/auth/smartcar/callback';
-    
-    if (!clientId) {
-        return res.status(400).json({ error: 'Smartcar client ID not configured' });
-    }
-
-    const scope = ['read_vehicle_info', 'read_location', 'read_odometer'].join(' ');
-    const connectUrl = `https://connect.smartcar.com/oauth/authorize?` +
-        `response_type=code&` +
-        `client_id=${clientId}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `scope=${encodeURIComponent(scope)}&` +
-        `state=sparklawn-connect`;
-
-    res.json({
-        message: 'Visit this URL to reconnect your vehicles',
-        connectUrl: connectUrl,
-        instructions: [
-            '1. Click the URL below to open Smartcar Connect',
-            '2. Log in with your Ford account',
-            '3. Authorize SparkLawn to access your vehicles',
-            '4. You will be redirected back with fresh tokens'
-        ]
-    });
-});
-
+// Basic vehicles endpoint - redirect to with-names for compatibility
 router.get('/', async (req, res) => {
     try {
-        console.log('🚗 Attempting to fetch vehicles...');
-        const vehicles = await smartcarClient.getVehicles();
-        console.log('✅ Vehicles fetched successfully:', vehicles);
-        res.json(vehicles);
-    } catch (error) {
-        console.error('❌ Error fetching vehicles:', error);
-        res.status(500).json({ 
-            error: 'Failed to fetch vehicles',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        });
-    }
-});
-
-router.get('/locations', async (req, res) => {
-    try {
-        const locations = await smartcarClient.getVehicleLocations();
-        res.json(locations);
-    } catch (error) {
-        console.error('Error fetching vehicle locations:', error);
-        res.status(500).json({ error: 'Failed to fetch vehicle locations' });
-    }
-});
-
-router.get('/:vehicleId/location', async (req, res) => {
-    try {
-        const { vehicleId } = req.params;
-        
-        // Validate vehicle ID format
-        if (!vehicleId || vehicleId.length < 10) {
-            return res.status(400).json({ 
-                error: 'Invalid vehicle ID format',
-                details: 'Vehicle ID must be a valid UUID'
-            });
-        }
-        
-        const location = await smartcarClient.getVehicleLocation(vehicleId);
-        res.json(location);
-    } catch (error) {
-        console.error('Error fetching vehicle location:', error);
-        
-        // Better error handling based on error type
-        if (error instanceof Error) {
-            if (error.message.includes('Unauthorized') || error.message.includes('401')) {
-                return res.status(401).json({ 
-                    error: 'Authentication failed',
-                    details: 'Vehicle access token may be expired'
-                });
-            }
-            if (error.message.includes('Not Found') || error.message.includes('404')) {
-                return res.status(404).json({ 
-                    error: 'Vehicle not found',
-                    details: 'Vehicle ID does not exist or is not accessible'
-                });
-            }
-            if (error.message.includes('Too Many Requests') || error.message.includes('429')) {
-                return res.status(429).json({ 
-                    error: 'Rate limit exceeded',
-                    details: 'Too many requests. Please try again later.'
-                });
-            }
-        }
-        
-        res.status(500).json({ 
-            error: 'Failed to fetch vehicle location',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        });
-    }
-});
-
-router.get('/:vehicleId/info', async (req, res) => {
-    try {
-        const { vehicleId } = req.params;
-        
-        // Validate vehicle ID format
-        if (!vehicleId || vehicleId.length < 10) {
-            return res.status(400).json({ 
-                error: 'Invalid vehicle ID format',
-                details: 'Vehicle ID must be a valid UUID'
-            });
-        }
-        
-        const info = await smartcarClient.getVehicleInfo(vehicleId);
-        res.json(info);
-    } catch (error) {
-        console.error('Error fetching vehicle info:', error);
-        
-        // Better error handling
-        if (error instanceof Error) {
-            if (error.message.includes('Unauthorized') || error.message.includes('401')) {
-                return res.status(401).json({ error: 'Authentication failed' });
-            }
-            if (error.message.includes('Not Found') || error.message.includes('404')) {
-                return res.status(404).json({ error: 'Vehicle not found' });
-            }
-        }
-        
-        res.status(500).json({ 
-            error: 'Failed to fetch vehicle info',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        });
-    }
-});
-
-// Get battery status for a specific vehicle
-router.get('/:vehicleId/battery', async (req, res) => {
-    try {
-        const { vehicleId } = req.params;
-        
-        // Validate vehicle ID format
-        if (!vehicleId || vehicleId.length < 10) {
-            return res.status(400).json({ 
-                error: 'Invalid vehicle ID format',
-                details: 'Vehicle ID must be a valid UUID'
-            });
-        }
-        
-        console.log(`🔋 Fetching battery data for vehicle: ${vehicleId}`);
-        const battery = await smartcarClient.getVehicleBattery(vehicleId);
-        console.log(`🔋 Battery response:`, battery);
-        
+        // For now, return a basic response indicating the service is running
+        // but the main data is available through other endpoints
         res.json({
-            vehicleId,
-            battery,
+            message: 'Vehicle service is running',
+            availableEndpoints: [
+                '/api/vehicles/with-names - Get all vehicles with detailed information',
+                '/api/vehicles/recent-activity - Get recent fleet activity',
+                '/api/vehicles/{vehicleId}/daily-stats - Get daily statistics',
+                '/api/vehicles/debug - System debug information'
+            ],
             timestamp: new Date().toISOString(),
-            dataSource: battery.percentRemaining >= 60 && battery.percentRemaining <= 100 ? 'possibly_mock' : 'likely_real'
+            status: 'service_running'
         });
     } catch (error) {
-        console.error('Error fetching vehicle battery:', error);
-        res.status(500).json({ 
-            error: 'Failed to fetch vehicle battery',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        });
-    }
-});
-
-// Get charging status for a specific vehicle
-router.get('/:vehicleId/charge', async (req, res) => {
-    try {
-        const { vehicleId } = req.params;
-        
-        // Validate vehicle ID format
-        if (!vehicleId || vehicleId.length < 10) {
-            return res.status(400).json({ 
-                error: 'Invalid vehicle ID format',
-                details: 'Vehicle ID must be a valid UUID'
-            });
-        }
-        
-        console.log(`⚡ Fetching charging data for vehicle: ${vehicleId}`);
-        const charge = await smartcarClient.getVehicleCharge(vehicleId);
-        console.log(`⚡ Charging response:`, charge);
-        
-        res.json({
-            vehicleId,
-            charge,
+        res.status(500).json({
+            error: 'Vehicle service error',
+            details: error instanceof Error ? error.message : 'Unknown error',
             timestamp: new Date().toISOString()
         });
-    } catch (error) {
-        console.error('Error fetching vehicle charge:', error);
-        res.status(500).json({ 
-            error: 'Failed to fetch vehicle charge',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        });
-    }
-});
-
-router.get('/:vehicleId/diagnostics', async (req, res) => {
-    try {
-        const { vehicleId } = req.params;
-        const diagnostics = await smartcarClient.getVehicleDiagnostics(vehicleId);
-        res.json(diagnostics);
-    } catch (error) {
-        console.error('Error fetching vehicle diagnostics:', error);
-        res.status(500).json({ error: 'Failed to fetch vehicle diagnostics' });
     }
 });
 
 // Get vehicles with names and locations
-// Debug endpoint to check token manager status
+// Debug endpoint to check system status
 router.get('/debug', async (req, res) => {
     try {
-        const { tokenManager } = await import('../services/tokenManager');
-        const tokens = await tokenManager.getCurrentTokens();
         res.json({
             mongodb_uri: process.env.MONGODB_URI ? 'Set' : 'Not set',
-            has_tokens: !!tokens,
-            token_expires_at: tokens?.expiresAt || 'N/A',
-            client_id: process.env.SMARTCAR_CLIENT_ID || 'Not set',
-            fallback_access_token: process.env.SMARTCAR_ACCESS_TOKEN ? 'Set' : 'Not set'
+            fordpass_configured: !!(process.env.FORDPASS_USERNAME && process.env.FORDPASS_PASSWORD && process.env.FORDPASS_VIN),
+            fordpass_username: process.env.FORDPASS_USERNAME ? 'Set' : 'Not set',
+            fordpass_vin: process.env.FORDPASS_VIN ? 'Set' : 'Not set'
         });
     } catch (error) {
         res.json({
             error: error instanceof Error ? error.message : 'Unknown error',
-            mongodb_uri: process.env.MONGODB_URI ? 'Set' : 'Not set',
-            client_id: process.env.SMARTCAR_CLIENT_ID || 'Not set'
+            mongodb_uri: process.env.MONGODB_URI ? 'Set' : 'Not set'
         });
     }
 });
 
-// Get all vehicles with detailed information - HYBRID FordPass + Smartcar
+// Get all vehicles with detailed information - FordPass only
 router.get('/with-names', async (req, res) => {
     try {
-        console.log('🚗 Fetching vehicles using hybrid client (FordPass primary, Smartcar fallback)');
+        console.log('🚗 Fetching vehicles using FordPass client');
         
         // Clear geocoding cache if requested
         if (req.query.clearCache === 'true') {
-            geocodingService.clearCache();
+            geocodingService.clearAllCaches();
         }
         
         const result = await hybridVehicleClient.getVehiclesWithDetails();
         
+        // Sort vehicles: real data first, placeholders last, van at the very bottom
+        const sortedVehicles = result.vehicles.sort((a, b) => {
+            // eTransit Van always goes to the bottom
+            if (a.name === 'eTransit Van') return 1;
+            if (b.name === 'eTransit Van') return -1;
+            
+            // Vehicles with real location data come first
+            const aHasData = a.location.latitude !== 0 && a.location.longitude !== 0 && !a.location.address?.includes('Error');
+            const bHasData = b.location.latitude !== 0 && b.location.longitude !== 0 && !b.location.address?.includes('Error');
+            
+            if (aHasData && !bHasData) return -1;
+            if (!aHasData && bHasData) return 1;
+            return 0;
+        });
+        
+        // Add vehicleId field for frontend compatibility (matching the vin field)
+        const vehiclesWithVehicleId = sortedVehicles.map(vehicle => ({
+            ...vehicle,
+            vehicleId: vehicle.vin
+        }));
+        
         res.json({ 
-            vehicles: result.vehicles,
-            count: result.vehicles.length,
+            vehicles: vehiclesWithVehicleId,
+            count: vehiclesWithVehicleId.length,
             timestamp: new Date().toISOString(),
-            dataSources: result.vehicles.map(v => ({
+            dataSources: sortedVehicles.map(v => ({
                 id: v.id,
                 name: v.name,
                 source: v.battery._dataSource,
-                isMockData: v.battery._isMockData
+                isMockData: v.battery._isMockData,
+                hasRealData: v.location.latitude !== 0 && v.location.longitude !== 0 && !v.location.address?.includes('Error')
             }))
         });
         
         console.log(`✅ Successfully retrieved ${result.vehicles.length} vehicles`);
         
     } catch (error) {
-        console.error('❌ Hybrid client failed, attempting emergency Smartcar fallback:', error);
+        console.error('❌ FordPass client failed:', error);
+        res.status(500).json({ 
+            error: 'Vehicle data source failed',
+            details: 'FordPass API is unavailable',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Get daily stats for a vehicle
+router.get('/:vehicleId/daily-stats', async (req, res) => {
+    try {
+        const { vehicleId } = req.params;
+        const { date } = req.query;
         
-        // Emergency fallback to pure Smartcar
+        // For now, return mock data since we need to integrate with backgroundMonitoringService
+        // This will be replaced with real data from MongoDB trips
+        const mockStats = {
+            date: date || new Date().toISOString().split('T')[0],
+            vehicleId,
+            totalTrips: 0,
+            totalRunTime: 0, // minutes
+            totalDistance: 0, // miles
+            totalBatteryUsed: 0, // percentage
+            firstTripStart: null,
+            lastTripEnd: null,
+            operatingHours: 0
+        };
+        
+        res.json(mockStats);
+        
+    } catch (error) {
+        console.error('❌ Failed to get daily stats:', error);
+        res.status(500).json({
+            error: 'Failed to fetch daily stats',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
+// Charging history endpoint  
+router.get('/:vehicleId/charging-history', async (req, res) => {
+    try {
+        const { vehicleId } = req.params;
+        
+        // TODO: Implement charging history from MongoDB or Ford Telematics
+        // For now, return placeholder data
+        const chargingHistory = [
+            {
+                date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+                startTime: '22:30',
+                endTime: '06:00',
+                duration: '7.5 hours',
+                energyAdded: '45 kWh',
+                batteryBefore: '15%',
+                batteryAfter: '95%',
+                chargingRate: '6 kW',
+                location: 'Home/Base'
+            },
+            {
+                date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+                startTime: '19:15',
+                endTime: '23:45',
+                duration: '4.5 hours',
+                energyAdded: '28 kWh',
+                batteryBefore: '35%',
+                batteryAfter: '85%',
+                chargingRate: '6.2 kW',
+                location: 'Client Location'
+            }
+        ];
+        
+        res.json({
+            success: true,
+            vehicleId,
+            history: chargingHistory || [],
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Failed to get charging history for', req.params.vehicleId, ':', error);
+        res.status(500).json({
+            error: 'Failed to fetch charging history',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
+// Recent Fleet Activity endpoint
+router.get('/recent-activity', async (req, res) => {
+    try {
+        const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+        const unreadOnly = req.query.unreadOnly === 'true';
+
+        // Get recent alerts from smart alerts service with MongoDB connection check
+        let alerts;
         try {
-            const vehicles = await smartcarClient.getVehicles();
-            const vehiclesWithNames = await Promise.allSettled(
-                vehicles.vehicles.map(async (vehicleId: string) => {
-                    const [location, battery] = await Promise.allSettled([
-                        smartcarClient.getVehicleLocation(vehicleId),
-                        smartcarClient.getVehicleBattery(vehicleId)
-                    ]);
-                    
-                    const locationData = location.status === 'fulfilled' ? location.value : null;
-                    const batteryData = battery.status === 'fulfilled' ? battery.value : { 
-                        percentRemaining: 0, 
-                        range: 0, 
-                        isPluggedIn: false,
-                        _isMockData: true 
-                    };
-                    
-                    const name = vehicleNaming.setVehicleName(vehicleId);
-                    const vehicleTypes: { [key: string]: { model: string, year: string } } = {
-                        'Van': { model: 'Transit', year: '2023' },
-                        'Truck': { model: 'F-150 Lightning', year: '2024' }
-                    };
-                    const vehicleType = vehicleTypes[name] || { model: 'F-150 Lightning', year: '2024' };
-                    
-                    let address = 'Location unavailable';
-                    if (locationData) {
-                        try {
-                            address = await geocodingService.getAddress(locationData.latitude, locationData.longitude);
-                        } catch (geocodeError) {
-                            address = `${locationData.latitude.toFixed(4)}, ${locationData.longitude.toFixed(4)}`;
-                        }
-                    }
-                    
-                    return {
-                        id: vehicleId,
-                        name,
-                        location: locationData ? {
-                            latitude: locationData.latitude,
-                            longitude: locationData.longitude,
-                            address
-                        } : null,
-                        battery: {
-                            percentRemaining: batteryData.percentRemaining || 0,
-                            range: batteryData.range || 0,
-                            isPluggedIn: batteryData.isPluggedIn || false,
-                            isCharging: batteryData.isPluggedIn || false,
-                            _isMockData: true,
-                            _dataSource: 'smartcar-emergency'
-                        },
-                        make: 'Ford',
-                        model: vehicleType.model,
-                        year: vehicleType.year,
-                        lastUpdated: new Date().toISOString()
-                    };
-                })
-            );
-            
-            const successfulVehicles = vehiclesWithNames
-                .filter((result): result is PromiseFulfilledResult<any> => 
-                    result.status === 'fulfilled'
-                )
-                .map(result => result.value);
-            
-            res.json({ 
-                vehicles: successfulVehicles,
-                count: successfulVehicles.length,
+            alerts = await smartAlertsService.getRecentAlerts(limit, unreadOnly);
+        } catch (mongoError) {
+            console.log('⚠️ MongoDB alerts unavailable, returning empty activity list');
+            return res.json({
+                success: true,
+                activities: [],
+                totalCount: 0,
+                unreadCount: 0,
                 timestamp: new Date().toISOString(),
-                warning: '⚠️ Using emergency Smartcar fallback - FordPass unavailable',
-                dataSources: successfulVehicles.map(v => ({
-                    id: v.id,
-                    name: v.name,
-                    source: 'smartcar-emergency',
-                    isMockData: true
-                }))
-            });
-            
-            console.log('⚠️ Emergency Smartcar fallback successful');
-            
-        } catch (emergencyError) {
-            console.error('❌ All vehicle data sources failed:', emergencyError);
-            res.status(500).json({ 
-                error: 'All vehicle data sources failed',
-                details: 'Both FordPass and Smartcar are unavailable',
-                timestamp: new Date().toISOString()
+                message: 'No recent activity available - alert system offline'
             });
         }
+
+        // Transform alerts into activity log format
+        const activityLogs = alerts.map(alert => {
+            let message = '';
+            const activityType = alert.alertType;
+
+            // Format activity messages based on alert type
+            switch (alert.alertType) {
+                case 'client_arrival':
+                    message = `Arrived at ${alert.location.clientName || alert.location.address}`;
+                    break;
+                case 'client_departure':
+                    message = `Left ${alert.metadata.previousLocation || 'location'}`;
+                    break;
+                case 'ignition_on':
+                    message = `Started at ${alert.location.address || 'unknown location'}`;
+                    break;
+                case 'ignition_off':
+                    message = `Stopped at ${alert.location.clientName || alert.location.address || 'unknown location'}`;
+                    break;
+                case 'trip_start':
+                    message = `Trip started from ${alert.location.address || 'unknown location'}`;
+                    break;
+                case 'trip_end':
+                    message = `Trip ended at ${alert.location.clientName || alert.location.address || 'unknown location'}`;
+                    if (alert.metadata.duration && alert.metadata.distance) {
+                        message += ` (${alert.metadata.duration.toFixed(1)} min, ${alert.metadata.distance.toFixed(1)} mi)`;
+                    }
+                    break;
+                case 'client_visit':
+                    message = `Visiting ${alert.location.clientName || alert.location.address}`;
+                    break;
+                default:
+                    message = alert.metadata.alertReason || `${alert.alertType.replace('_', ' ')} at ${alert.location.address || 'unknown location'}`;
+                    break;
+            }
+
+            return {
+                id: alert._id,
+                vehicleId: alert.vehicleId,
+                vehicleName: alert.vehicleName,
+                activityType,
+                message,
+                timestamp: alert.timestamp,
+                location: {
+                    latitude: alert.location.latitude,
+                    longitude: alert.location.longitude,
+                    address: alert.location.address,
+                    clientName: alert.location.clientName
+                },
+                metadata: {
+                    batteryLevel: alert.metadata.batteryLevel,
+                    duration: alert.metadata.duration,
+                    distance: alert.metadata.distance,
+                    batteryUsed: alert.metadata.batteryUsed,
+                    tripId: alert.metadata.tripId
+                },
+                priority: alert.priority,
+                isRead: alert.isRead
+            };
+        });
+
+        // Get unread count for summary
+        const unreadCount = await smartAlertsService.getUnreadCount();
+
+        res.json({
+            success: true,
+            activities: activityLogs,
+            totalCount: activityLogs.length,
+            unreadCount,
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.error('❌ Failed to get recent fleet activity:', error);
+        res.status(500).json({
+            error: 'Failed to fetch recent fleet activity',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 });
 

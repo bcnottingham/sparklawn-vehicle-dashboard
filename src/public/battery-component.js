@@ -2,23 +2,28 @@
 function createBatteryIcon(batteryData) {
     const { percentRemaining, isPluggedIn, isCharging, range, _isMockData } = batteryData;
     
+    // Smart percentage conversion - handle both decimal (0.895) and whole number (1) formats
+    const batteryPercent = percentRemaining > 1 
+        ? Math.round(percentRemaining) // Already a percentage (89.5 -> 90)
+        : Math.round(percentRemaining * 100); // Decimal format (0.895 -> 90)
+    
     // Determine battery level category
     let levelClass = 'battery-low';
     let statusClass = 'low';
-    if (percentRemaining >= 70) {
+    if (batteryPercent >= 70) {
         levelClass = 'battery-high';
         statusClass = 'high';
-    } else if (percentRemaining >= 35) {
+    } else if (batteryPercent >= 35) {
         levelClass = 'battery-medium';
         statusClass = 'medium';
     }
     
     // Calculate fill width (max 28px for the battery interior)
-    const fillWidth = Math.max(2, (percentRemaining / 100) * 28);
+    const fillWidth = Math.max(2, (batteryPercent / 100) * 28);
     
     // Estimate time to full charge (rough calculation)
-    const timeToFull = isCharging && percentRemaining < 100 
-        ? Math.round((100 - percentRemaining) / 2) // Assume ~2% per minute
+    const timeToFull = isCharging && batteryPercent < 100 
+        ? Math.round((100 - batteryPercent) / 2) // Assume ~2% per minute
         : null;
     
     // Build the component HTML
@@ -31,7 +36,7 @@ function createBatteryIcon(batteryData) {
                 <div class="battery-fill" style="width: ${fillWidth}px;"></div>
             </div>
             <span class="battery-status ${statusClass}">
-                ${percentRemaining}%
+                ${batteryPercent}%
             </span>
             ${isPluggedIn ? '<span class="plug-indicator">🔌</span>' : ''}
             ${isCharging ? `
@@ -60,13 +65,16 @@ function createFleetBatteryStatus(vehicles) {
     
     vehicles.forEach(vehicle => {
         const battery = vehicle.battery;
-        totalPercent += battery.percentRemaining;
+        const batteryPercent = battery.percentRemaining > 1 
+            ? Math.round(battery.percentRemaining) 
+            : Math.round(battery.percentRemaining * 100);
+        totalPercent += batteryPercent;
         
         if (battery.isCharging) batteryStats.charging++;
         if (battery.isPluggedIn) batteryStats.pluggedIn++;
         
-        if (battery.percentRemaining < 35) batteryStats.low++;
-        else if (battery.percentRemaining < 70) batteryStats.medium++;
+        if (batteryPercent < 35) batteryStats.low++;
+        else if (batteryPercent < 70) batteryStats.medium++;
         else batteryStats.high++;
     });
     

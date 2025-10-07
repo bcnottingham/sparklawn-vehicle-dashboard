@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SparkLawn Fleet Analytics Dashboard</title>
+    <title>SparkLawn Fleet Analytics</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="/css/modern-styles.css">
+    <link rel="stylesheet" href="/battery-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* Fleet Dashboard Specific Styles */
@@ -241,9 +242,32 @@
 <body>
     <div class="header">
         <div class="container">
-            <h1>📊 SparkLawn Fleet Analytics</h1>
-            <div class="status-bar">
-                <span id="data-period">Last 7 days</span>
+            <h1>
+                <img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=410,fit=crop,q=95/AMqajOBKjaiq4bNK/sparklawn-logo_white-ALpbzbLkvNc5b3nv.png" alt="SparkLawn Logo" style="height: 32px; vertical-align: middle; margin-right: 12px;">
+                Vehicle Dashboard
+            </h1>
+            <div class="header-center">
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-btn" id="nav-dropdown-btn">
+                        📊 Analytics
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="nav-dropdown-menu" id="nav-dropdown-menu">
+                        <a href="/" class="dropdown-item">📍 Fleet Dashboard</a>
+                        <a href="/trips" class="dropdown-item">🛣️ Trip Tracker</a>
+                        <a href="/fleet" class="dropdown-item active">📊 Analytics</a>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <span id="vehicle-count" class="vehicle-count">Loading vehicles...</span>
+                <span id="data-source-indicator" class="data-source-display">
+                    <span class="data-source-label">Data Source:</span>
+                    <span class="data-source-badge" id="data-source-badge">Hybrid</span>
+                </span>
+                <button id="connect-vehicles-btn" class="connect-btn">
+                    🔌 Connect
+                </button>
                 <span id="last-update">Last updated: --</span>
             </div>
         </div>
@@ -404,6 +428,30 @@
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
             loadFleetData();
+            
+            // Navigation dropdown functionality
+            const dropdownBtn = document.getElementById('nav-dropdown-btn');
+            const dropdownMenu = document.getElementById('nav-dropdown-menu');
+            const dropdown = document.querySelector('.nav-dropdown');
+            
+            if (dropdownBtn && dropdownMenu && dropdown) {
+                dropdownBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('active');
+                });
+                
+                document.addEventListener('click', (e) => {
+                    if (!dropdown.contains(e.target)) {
+                        dropdown.classList.remove('active');
+                    }
+                });
+                
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        dropdown.classList.remove('active');
+                    }
+                });
+            }
             
             // Auto-refresh every 5 minutes
             setInterval(loadFleetData, 5 * 60 * 1000);

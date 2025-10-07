@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SparkLawn Trip Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/css/modern-styles.css">
+    <link rel="stylesheet" href="/battery-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Trip Dashboard Specific Styles */
+        .trip-dashboard-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            height: calc(100vh - 60px);
+            gap: 0;
+        }
+
+        .trip-sidebar {
+            background: white;
+            border-right: 1px solid var(--gray-200);
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .trip-main {
+            position: relative;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .vehicles-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .vehicles-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .vehicle-filter {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .vehicle-filter-item {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            padding: 10px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .vehicle-filter-item:hover {
+            border-color: var(--primary-green);
+            box-shadow: var(--shadow-md);
+        }
+
+        .vehicle-filter-item.active {
+            border-color: var(--primary-green);
+            background: #f0fdf4;
+        }
+
+        .filter-vehicle-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 2px;
+        }
+
+        .filter-vehicle-model {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .trip-log-section {
+            margin-top: 16px;
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .trip-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .trip-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            padding: 12px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .trip-card:hover {
+            border-color: var(--primary-green);
+            box-shadow: var(--shadow-md);
+        }
+
+        .trip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .trip-time {
+            font-size: 12px;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .trip-distance {
+            font-size: 12px;
+            color: var(--primary-green);
+            font-weight: 600;
+        }
+
+        .trip-route {
+            font-size: 13px;
+            color: var(--gray-900);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .trip-addresses {
+            font-size: 11px;
+            color: var(--gray-500);
+            line-height: 1.3;
+        }
+
+        #trip-map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .map-btn {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+        }
+
+        .map-btn:hover {
+            background: var(--gray-50);
+            box-shadow: var(--shadow-md);
+        }
+
+        @media (max-width: 768px) {
+            .trip-dashboard-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+                height: calc(100vh - 60px);
+            }
+            
+            .trip-sidebar {
+                border-right: none;
+                border-bottom: 1px solid var(--gray-200);
+                max-height: 40vh;
+                min-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>
+                <img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=410,fit=crop,q=95/AMqajOBKjaiq4bNK/sparklawn-logo_white-ALpbzbLkvNc5b3nv.png" alt="SparkLawn Logo" style="height: 32px; vertical-align: middle; margin-right: 12px;">
+                Vehicle Dashboard
+            </h1>
+            <div class="header-center">
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-btn" id="nav-dropdown-btn">
+                        🛣️ Trip Tracker
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="nav-dropdown-menu" id="nav-dropdown-menu">
+                        <a href="/" class="dropdown-item">📍 Fleet Dashboard</a>
+                        <a href="/trips" class="dropdown-item active">🛣️ Trip Tracker</a>
+                        <a href="/fleet" class="dropdown-item">📊 Analytics</a>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <span id="vehicle-count" class="vehicle-count">Loading vehicles...</span>
+                <span id="data-source-indicator" class="data-source-display">
+                    <span class="data-source-label">Data Source:</span>
+                    <span class="data-source-badge" id="data-source-badge">Hybrid</span>
+                </span>
+                <button id="connect-vehicles-btn" class="connect-btn">
+                    🔌 Connect
+                </button>
+                <span id="last-update">Last updated: --</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="trip-dashboard-layout">
+        <div class="trip-sidebar">
+            <div class="vehicles-header">
+                <h2 class="vehicles-title">Vehicle Filter</h2>
+            </div>
+            <div class="vehicle-filter" id="vehicle-filter">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <span>Loading vehicles...</span>
+                </div>
+            </div>
+            
+            <div class="trip-log-section">
+                <div class="vehicles-header">
+                    <h2 class="vehicles-title">Trip Log</h2>
+                </div>
+                <div class="trip-list" id="trip-list">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <span>Loading trips...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="trip-main">
+            <div id="trip-map"></div>
+            <div class="map-controls">
+                <button id="refresh-btn" class="map-btn">🔄 Refresh</button>
+                <button id="center-btn" class="map-btn">📍 Center</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Trip Dashboard JavaScript
+        let map;
+        let selectedVehicleId = 'all'; // Default to show all vehicles
+        let vehicleData = [];
+        let tripData = [];
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMap();
+            loadVehicles();
+            loadTrips();
+            
+            // Navigation dropdown functionality
+            const dropdownBtn = document.getElementById('nav-dropdown-btn');
+            const dropdownMenu = document.getElementById('nav-dropdown-menu');
+            const dropdown = document.querySelector('.nav-dropdown');
+            
+            if (dropdownBtn && dropdownMenu && dropdown) {
+                dropdownBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('active');
+                });
+                
+                document.addEventListener('click', (e) => {
+                    if (!dropdown.contains(e.target)) {
+                        dropdown.classList.remove('active');
+                    }
+                });
+                
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        dropdown.classList.remove('active');
+                    }
+                });
+            }
+        });
+
+        function initializeMap() {
+            map = L.map('trip-map').setView([36.3, -94.2], 10);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18
+            }).addTo(map);
+        }
+
+        async function loadVehicles() {
+            try {
+                const response = await fetch('/api/vehicles/with-names');
+                const data = await response.json();
+                vehicleData = data.vehicles || [];
+                
+                renderVehicleFilter();
+                updateVehicleCount();
+                
+            } catch (error) {
+                console.error('Error loading vehicles:', error);
+                document.getElementById('vehicle-filter').innerHTML = 
+                    '<div style="text-align: center; color: var(--gray-500); padding: 20px;">Error loading vehicles</div>';
+            }
+        }
+
+        function renderVehicleFilter() {
+            const filter = document.getElementById('vehicle-filter');
+            filter.innerHTML = '';
+
+            // Add "All Vehicles" option
+            const allOption = document.createElement('div');
+            allOption.className = `vehicle-filter-item ${selectedVehicleId === 'all' ? 'active' : ''}`;
+            allOption.onclick = () => selectVehicle('all');
+            allOption.innerHTML = `
+                <div class="filter-vehicle-name">All Vehicles</div>
+                <div class="filter-vehicle-model">Show trips from all vehicles</div>
+            `;
+            filter.appendChild(allOption);
+
+            // Add individual vehicle options
+            vehicleData.forEach(vehicle => {
+                const option = document.createElement('div');
+                option.className = `vehicle-filter-item ${vehicle.id === selectedVehicleId ? 'active' : ''}`;
+                option.onclick = () => selectVehicle(vehicle.id);
+                
+                option.innerHTML = `
+                    <div class="filter-vehicle-name">${vehicle.name}</div>
+                    <div class="filter-vehicle-model">${vehicle.year || ''} ${vehicle.model || 'Unknown'}</div>
+                `;
+                
+                filter.appendChild(option);
+            });
+        }
+
+        function updateVehicleCount() {
+            const count = vehicleData.length;
+            document.getElementById('vehicle-count').textContent = `${count} vehicles online`;
+        }
+
+        function selectVehicle(vehicleId) {
+            selectedVehicleId = vehicleId;
+            renderVehicleFilter();
+            loadTrips();
+        }
+
+        async function loadTrips() {
+            try {
+                let url = '/api/ignition-trips?limit=50';
+                if (selectedVehicleId !== 'all') {
+                    url += `&vehicleId=${selectedVehicleId}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                tripData = data.trips || [];
+                
+                renderTripList();
+                
+            } catch (error) {
+                console.error('Error loading trips:', error);
+                document.getElementById('trip-list').innerHTML = 
+                    '<div style="text-align: center; color: var(--gray-500); padding: 40px;">Error loading trip data</div>';
+            }
+        }
+
+        function renderTripList() {
+            const tripList = document.getElementById('trip-list');
+            
+            if (tripData.length === 0) {
+                tripList.innerHTML = 
+                    '<div style="text-align: center; color: var(--gray-500); padding: 40px;">No trips available<br><small>Trips will appear once vehicles start moving</small></div>';
+                return;
+            }
+
+            tripList.innerHTML = '';
+
+            tripData.forEach((trip, index) => {
+                const tripCard = document.createElement('div');
+                tripCard.className = 'trip-card';
+                tripCard.onclick = () => showTripDetails(trip);
+                
+                const startTime = new Date(trip.startTime);
+                const endTime = trip.endTime ? new Date(trip.endTime) : null;
+                const duration = endTime ? Math.round((endTime - startTime) / (1000 * 60)) : null;
+                
+                const timeStr = startTime.toLocaleDateString() + ' ' + startTime.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false 
+                });
+
+                const startAddr = (trip.startLocation?.address || 'Unknown Location').replace(/, Arkansas/g, ', AR');
+                const endAddr = trip.endLocation?.address ? 
+                    trip.endLocation.address.replace(/, Arkansas/g, ', AR') : 
+                    (trip.isComplete ? 'Unknown Destination' : 'In Progress');
+                
+                tripCard.innerHTML = `
+                    <div class="trip-header">
+                        <div class="trip-time">${timeStr}</div>
+                        <div class="trip-distance">${trip.distance ? trip.distance.toFixed(1) + ' MI' : '--'}</div>
+                    </div>
+                    <div class="trip-route">${trip.vehicleName || 'Unknown Vehicle'}</div>
+                    <div class="trip-addresses">
+                        <div><strong>From:</strong> ${startAddr.length > 35 ? startAddr.substring(0, 35) + '...' : startAddr}</div>
+                        ${endAddr !== 'In Progress' ? `<div><strong>To:</strong> ${endAddr.length > 35 ? endAddr.substring(0, 35) + '...' : endAddr}</div>` : '<div><strong>Status:</strong> In Progress</div>'}
+                        ${duration ? `<div><strong>Duration:</strong> ${duration} minutes</div>` : ''}
+                    </div>
+                `;
+                
+                tripList.appendChild(tripCard);
+            });
+        }
+
+        function showTripDetails(trip) {
+            // Clear existing markers
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            // Show start location
+            if (trip.startLocation) {
+                const startMarker = L.marker([trip.startLocation.latitude, trip.startLocation.longitude])
+                    .addTo(map)
+                    .bindPopup(`<b>Trip Start</b><br>${trip.startLocation.address || 'Start Location'}`);
+            }
+
+            // Show end location if available
+            if (trip.endLocation) {
+                const endMarker = L.marker([trip.endLocation.latitude, trip.endLocation.longitude])
+                    .addTo(map)
+                    .bindPopup(`<b>Trip End</b><br>${trip.endLocation.address || 'End Location'}`);
+                
+                // Fit map to show both points
+                const group = new L.featureGroup([
+                    L.marker([trip.startLocation.latitude, trip.startLocation.longitude]),
+                    L.marker([trip.endLocation.latitude, trip.endLocation.longitude])
+                ]);
+                map.fitBounds(group.getBounds(), { padding: [20, 20] });
+            } else if (trip.startLocation) {
+                // Just center on start location
+                map.setView([trip.startLocation.latitude, trip.startLocation.longitude], 14);
+            }
+        }
+    </script>
+</body>
+</html>

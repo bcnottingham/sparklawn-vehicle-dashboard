@@ -70,17 +70,23 @@ export interface VehicleMovementEvent {
 export class TripHistoryService {
     private client!: MongoClient;
     private db!: Db;
-    private tripsCollection!: Collection<Trip>;
+    protected tripsCollection!: Collection<Trip>;
     private pointsCollection!: Collection<TripPoint>;
-    private eventsCollection!: Collection<VehicleMovementEvent>;
+    protected eventsCollection!: Collection<VehicleMovementEvent>;
     private activeTrips: Map<string, Trip> = new Map();
     private lastKnownLocations: Map<string, TripPoint> = new Map();
     
     // Configuration
     private readonly TRIP_START_MOVEMENT_THRESHOLD = 50; // meters
     private readonly TRIP_END_IDLE_TIME = 10; // minutes
-    private readonly LOCATION_UPDATE_INTERVAL = 30; // seconds
-    private readonly MAX_SPEED_THRESHOLD = 80; // mph (likely GPS error if exceeded)
+    private readonly LOCATION_UPDATE_INTERVAL = 3; // seconds for detailed trip tracking
+    // GPS noise filtering and realistic trip detection constants
+    private readonly MIN_MOVEMENT_THRESHOLD = 20; // meters - increased to filter GPS drift
+    private readonly MIN_TRIP_DISTANCE = 100; // meters - minimum distance to consider a real trip
+    private readonly MIN_SPEED_THRESHOLD = 3; // mph - ignore movements slower than walking speed
+    private readonly MAX_SPEED_THRESHOLD = 85; // mph - maximum realistic speed for work vehicles
+    private readonly GPS_ACCURACY_BUFFER = 15; // meters - typical GPS accuracy, ignore smaller movements
+    private readonly MIN_TIME_BETWEEN_POINTS = 5; // seconds - minimum time to avoid division by zero
     
     constructor() {
         this.connect();
@@ -90,7 +96,8 @@ export class TripHistoryService {
         try {
             const mongoUri = process.env.MONGODB_URI;
             if (!mongoUri) {
-                throw new Error('MONGODB_URI environment variable is required');
+                console.warn('⚠️ MONGODB_URI not configured - trip history service disabled');
+                return;
             }
             
             this.client = new MongoClient(mongoUri);
@@ -292,10 +299,24 @@ export class TripHistoryService {
             address: endPoint.address
         };
         activeTrip.endBattery = endPoint.batteryLevel;
-        activeTrip.isComplete = true;
-        
-        // Calculate final trip metrics
+
+        // Calculate final trip metrics first to get distance
         await this.calculateFinalTripMetrics(activeTrip);
+
+        // Validate trip meets minimum requirements - filter out GPS noise trips
+        const totalDistanceMeters = (activeTrip.distance || 0) * 1609.34; // Convert miles to meters
+        if (totalDistanceMeters < this.MIN_TRIP_DISTANCE) {
+            console.log(`🚫 Discarding trip for ${activeTrip.vehicleName}: distance ${totalDistanceMeters.toFixed(1)}m below ${this.MIN_TRIP_DISTANCE}m threshold`);
+
+            // Remove invalid trip from database and active trips
+            if (activeTrip._id) {
+                await this.tripsCollection.deleteOne({ _id: activeTrip._id });
+            }
+            this.activeTrips.delete(vehicleId);
+            return;
+        }
+
+        activeTrip.isComplete = true;
         
         // Update in database
         await this.tripsCollection.updateOne(
@@ -361,21 +382,43 @@ export class TripHistoryService {
             );
             totalDistance += segmentDistance;
             
-            // Speed analysis
-            const timeDiff = (curr.timestamp.getTime() - prev.timestamp.getTime()) / (1000 * 3600); // hours
-            if (timeDiff > 0 && segmentDistance > 0) {
-                const speed = segmentDistance / timeDiff;
-                if (speed < this.MAX_SPEED_THRESHOLD) {
+            // Enhanced speed analysis with GPS noise filtering
+            const timeDiffSeconds = (curr.timestamp.getTime() - prev.timestamp.getTime()) / 1000;
+            const timeDiffHours = timeDiffSeconds / 3600;
+
+            // Only process segments with meaningful distance and time differences
+            if (timeDiffSeconds >= this.MIN_TIME_BETWEEN_POINTS &&
+                segmentDistance >= this.GPS_ACCURACY_BUFFER &&
+                timeDiffHours > 0) {
+
+                const speed = segmentDistance / timeDiffHours; // mph
+
+                // Filter out impossible speeds caused by GPS drift/noise
+                if (speed >= this.MIN_SPEED_THRESHOLD && speed <= this.MAX_SPEED_THRESHOLD) {
                     maxSpeed = Math.max(maxSpeed, speed);
+
                     if (speed > 5) { // Moving
-                        movingTime += timeDiff * 60; // minutes
-                    } else { // Stopped
-                        idleTime += timeDiff * 60;
-                        if (timeDiff > 2/60) { // Stop longer than 2 minutes
+                        movingTime += timeDiffHours * 60; // minutes
+                    } else { // Stopped or very slow movement
+                        idleTime += timeDiffHours * 60;
+                        if (timeDiffHours > 2/60) { // Stop longer than 2 minutes
                             stops++;
                         }
                     }
+                } else {
+                    // Log filtered GPS noise for debugging
+                    if (speed > this.MAX_SPEED_THRESHOLD) {
+                        console.log(`🚫 Filtered impossible speed: ${speed.toFixed(1)} mph (distance: ${segmentDistance.toFixed(1)}m, time: ${timeDiffSeconds}s) for ${trip.vehicleId}`);
+                    }
+                    // Treat as idle time for very low speeds (GPS noise while parked)
+                    idleTime += timeDiffHours * 60;
                 }
+            } else {
+                // GPS noise - very small movement or time difference, treat as idle
+                if (segmentDistance < this.GPS_ACCURACY_BUFFER) {
+                    console.log(`🚫 Filtered GPS drift: ${segmentDistance.toFixed(1)}m movement for ${trip.vehicleId}`);
+                }
+                idleTime += timeDiffHours * 60;
             }
             
             // Battery analysis
@@ -422,7 +465,7 @@ export class TripHistoryService {
     }
     
     // Haversine formula for distance calculation
-    private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    protected calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
         const R = 3959; // Earth's radius in miles
         const dLat = this.toRadians(lat2 - lat1);
         const dLon = this.toRadians(lon2 - lon1);
@@ -441,12 +484,22 @@ export class TripHistoryService {
     // Public API methods
     
     public async getTripHistory(vehicleId?: string, limit: number = 50): Promise<Trip[]> {
-        const query = vehicleId ? { vehicleId, isComplete: true } : { isComplete: true };
-        return this.tripsCollection
-            .find(query)
-            .sort({ startTime: -1 })
-            .limit(limit)
-            .toArray();
+        if (!this.tripsCollection) {
+            console.warn('⚠️ MongoDB not connected, returning empty trip history');
+            return [];
+        }
+        
+        try {
+            const query = vehicleId ? { vehicleId, isComplete: true } : { isComplete: true };
+            return await this.tripsCollection
+                .find(query)
+                .sort({ startTime: -1 })
+                .limit(limit)
+                .toArray();
+        } catch (error) {
+            console.error('❌ Failed to fetch trip history from MongoDB:', error);
+            return [];
+        }
     }
     
     public async getActiveTrips(): Promise<Trip[]> {
@@ -454,22 +507,22 @@ export class TripHistoryService {
     }
     
     public async getTripById(tripId: string): Promise<Trip | null> {
-        return this.tripsCollection.findOne({ _id: tripId });
+        if (!this.tripsCollection) {
+            console.warn('⚠️ MongoDB not connected, cannot fetch trip by ID');
+            return null;
+        }
+        
+        try {
+            return await this.tripsCollection.findOne({ _id: tripId });
+        } catch (error) {
+            console.error('❌ Failed to fetch trip by ID from MongoDB:', error);
+            return null;
+        }
     }
     
     public async getVehicleStats(vehicleId: string, days: number = 30): Promise<any> {
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - days);
-        
-        const trips = await this.tripsCollection
-            .find({
-                vehicleId,
-                isComplete: true,
-                startTime: { $gte: startDate }
-            })
-            .toArray();
-        
-        if (trips.length === 0) {
+        if (!this.tripsCollection) {
+            console.warn('⚠️ MongoDB not connected, returning empty vehicle stats');
             return {
                 totalTrips: 0,
                 totalDistance: 0,
@@ -480,30 +533,70 @@ export class TripHistoryService {
             };
         }
         
-        const totalDistance = trips.reduce((sum, trip) => sum + (trip.distance || 0), 0);
-        const totalDuration = trips.reduce((sum, trip) => sum + (trip.duration || 0), 0);
-        const totalEnergyUsed = trips.reduce((sum, trip) => sum + (trip.energyUsed || 0), 0);
+        try {
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - days);
+            
+            const trips = await this.tripsCollection
+                .find({
+                    vehicleId,
+                    isComplete: true,
+                    startTime: { $gte: startDate }
+                })
+                .toArray();
+                
+            if (trips.length === 0) {
+            return {
+                totalTrips: 0,
+                totalDistance: 0,
+                totalDuration: 0,
+                avgDistance: 0,
+                avgDuration: 0,
+                energyEfficiency: 0
+            };
+        }
         
-        return {
-            totalTrips: trips.length,
-            totalDistance: Math.round(totalDistance * 10) / 10,
-            totalDuration: totalDuration,
-            avgDistance: Math.round((totalDistance / trips.length) * 10) / 10,
-            avgDuration: Math.round(totalDuration / trips.length),
-            energyEfficiency: totalDistance > 0 ? Math.round((totalDistance / totalEnergyUsed) * 10) / 10 : 0
-        };
+            const totalDistance = trips.reduce((sum, trip) => sum + (trip.distance || 0), 0);
+            const totalDuration = trips.reduce((sum, trip) => sum + (trip.duration || 0), 0);
+            const totalEnergyUsed = trips.reduce((sum, trip) => sum + (trip.energyUsed || 0), 0);
+            
+            return {
+                totalTrips: trips.length,
+                totalDistance: Math.round(totalDistance * 10) / 10,
+                totalDuration: totalDuration,
+                avgDistance: Math.round((totalDistance / trips.length) * 10) / 10,
+                avgDuration: Math.round(totalDuration / trips.length),
+                energyEfficiency: totalDistance > 0 ? Math.round((totalDistance / totalEnergyUsed) * 10) / 10 : 0
+            };
+        } catch (error) {
+            console.error('❌ Failed to fetch vehicle stats from MongoDB:', error);
+            return {
+                totalTrips: 0,
+                totalDistance: 0,
+                totalDuration: 0,
+                avgDistance: 0,
+                avgDuration: 0,
+                energyEfficiency: 0
+            };
+        }
     }
     
     public async getFleetStats(days: number = 7): Promise<any> {
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - days);
+        if (!this.tripsCollection) {
+            console.warn('⚠️ MongoDB not connected, returning empty fleet stats');
+            return { vehicleStats: {}, totalTrips: 0, totalDistance: 0 };
+        }
         
-        const trips = await this.tripsCollection
-            .find({
-                isComplete: true,
-                startTime: { $gte: startDate }
-            })
-            .toArray();
+        try {
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - days);
+            
+            const trips = await this.tripsCollection
+                .find({
+                    isComplete: true,
+                    startTime: { $gte: startDate }
+                })
+                .toArray();
         
         const vehicleStats: {[key: string]: any} = {};
         trips.forEach(trip => {
@@ -520,14 +613,296 @@ export class TripHistoryService {
             vehicleStats[trip.vehicleId].duration += trip.duration || 0;
         });
         
-        return {
-            totalTrips: trips.length,
-            totalDistance: trips.reduce((sum, trip) => sum + (trip.distance || 0), 0),
-            totalDuration: trips.reduce((sum, trip) => sum + (trip.duration || 0), 0),
-            activeVehicles: Object.keys(vehicleStats).length,
-            vehicleBreakdown: vehicleStats
-        };
+            return {
+                totalTrips: trips.length,
+                totalDistance: trips.reduce((sum, trip) => sum + (trip.distance || 0), 0),
+                totalDuration: trips.reduce((sum, trip) => sum + (trip.duration || 0), 0),
+                activeVehicles: Object.keys(vehicleStats).length,
+                vehicleBreakdown: vehicleStats
+            };
+        } catch (error) {
+            console.error('❌ Failed to fetch fleet stats from MongoDB:', error);
+            return { vehicleStats: {}, totalTrips: 0, totalDistance: 0 };
+        }
+    }
+}
+
+// Linear Timeline Data Interface
+export interface TimelineEvent {
+    type: 'ignition_on' | 'departure' | 'arrival' | 'stop_start' | 'stop_end' | 'parked' | 'ignition_off';
+    timestamp: Date;
+    location: {
+        latitude: number;
+        longitude: number;
+        address?: string;
+        clientName?: string;
+    };
+    batteryLevel?: number;
+    duration?: number; // For stops and drives
+    distance?: number; // For drives
+    metadata?: {
+        stopDuration?: number;
+        driveDuration?: number;
+        driveDistance?: number;
+        previousLocation?: string;
+    };
+}
+
+// Extend the TripHistoryService class with timeline methods
+export class TripTimelineService extends TripHistoryService {
+    public async getTodaysLinearTimeline(vehicleId: string): Promise<{
+        vehicle: string;
+        status: 'active' | 'parked' | 'no_activity';
+        currentLocation?: string;
+        currentClient?: string;
+        parkedDuration?: number;
+        timeline: TimelineEvent[];
+    }> {
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            // Get today's trips and events
+            const todaysTrips = await this.tripsCollection
+                .find({
+                    vehicleId,
+                    startTime: { $gte: today, $lt: tomorrow }
+                })
+                .sort({ startTime: 1 })
+                .toArray();
+
+            const todaysEvents = await this.eventsCollection
+                .find({
+                    vehicleId,
+                    timestamp: { $gte: today, $lt: tomorrow }
+                })
+                .sort({ timestamp: 1 })
+                .toArray();
+
+            const timeline: TimelineEvent[] = [];
+            let currentStatus: 'active' | 'parked' | 'no_activity' = 'no_activity';
+            let currentLocation: string | undefined;
+            let currentClient: string | undefined;
+            let parkedDuration: number | undefined;
+
+            // If no activity today, show current parked status
+            if (todaysTrips.length === 0 && todaysEvents.length === 0) {
+                // Get latest known location from any recent trip
+                const recentTrip = await this.tripsCollection
+                    .findOne(
+                        { vehicleId },
+                        { sort: { startTime: -1 } }
+                    );
+
+                if (recentTrip && recentTrip.endLocation) {
+                    currentStatus = 'parked';
+                    currentLocation = recentTrip.endLocation.address;
+                    currentClient = await this.getClientNameFromLocation(
+                        recentTrip.endLocation.latitude,
+                        recentTrip.endLocation.longitude
+                    );
+                    
+                    // Calculate how long it's been parked
+                    if (recentTrip.endTime) {
+                        parkedDuration = Math.floor((Date.now() - recentTrip.endTime.getTime()) / (1000 * 60));
+                    }
+
+                    timeline.push({
+                        type: 'parked',
+                        timestamp: recentTrip.endTime || new Date(),
+                        location: recentTrip.endLocation,
+                        metadata: {
+                            stopDuration: parkedDuration
+                        }
+                    });
+                }
+                
+                return {
+                    vehicle: vehicleId,
+                    status: currentStatus,
+                    currentLocation,
+                    currentClient,
+                    parkedDuration,
+                    timeline
+                };
+            }
+
+            // Process trips chronologically to build timeline
+            for (const trip of todaysTrips) {
+                // Trip start (ignition on)
+                timeline.push({
+                    type: 'ignition_on',
+                    timestamp: trip.startTime,
+                    location: trip.startLocation,
+                    batteryLevel: trip.startBattery
+                });
+
+                // Departure (leaving first location)
+                if (trip.points && trip.points.length > 1) {
+                    const departurePoint = trip.points[1]; // Second point shows actual departure
+                    timeline.push({
+                        type: 'departure',
+                        timestamp: departurePoint.timestamp,
+                        location: {
+                            latitude: departurePoint.latitude,
+                            longitude: departurePoint.longitude,
+                            address: departurePoint.address
+                        },
+                        batteryLevel: departurePoint.batteryLevel
+                    });
+                }
+
+                // Process stops during the trip
+                await this.processTripStops(trip, timeline);
+
+                // Trip end
+                if (trip.isComplete && trip.endLocation && trip.endTime) {
+                    timeline.push({
+                        type: 'arrival',
+                        timestamp: trip.endTime,
+                        location: trip.endLocation,
+                        batteryLevel: trip.endBattery,
+                        metadata: {
+                            driveDuration: trip.duration,
+                            driveDistance: trip.distance
+                        }
+                    });
+
+                    timeline.push({
+                        type: 'ignition_off',
+                        timestamp: trip.endTime,
+                        location: trip.endLocation,
+                        batteryLevel: trip.endBattery
+                    });
+
+                    currentStatus = 'parked';
+                    currentLocation = trip.endLocation.address;
+                    currentClient = await this.getClientNameFromLocation(
+                        trip.endLocation.latitude,
+                        trip.endLocation.longitude
+                    );
+                } else {
+                    // Trip is still active
+                    currentStatus = 'active';
+                    if (trip.points && trip.points.length > 0) {
+                        const lastPoint = trip.points[trip.points.length - 1];
+                        currentLocation = lastPoint.address;
+                        currentClient = await this.getClientNameFromLocation(
+                            lastPoint.latitude,
+                            lastPoint.longitude
+                        );
+                    }
+                }
+            }
+
+            // Calculate parked duration if currently parked
+            if (currentStatus === 'parked' && timeline.length > 0) {
+                const lastEvent = timeline[timeline.length - 1];
+                parkedDuration = Math.floor((Date.now() - lastEvent.timestamp.getTime()) / (1000 * 60));
+            }
+
+            return {
+                vehicle: vehicleId,
+                status: currentStatus,
+                currentLocation,
+                currentClient,
+                parkedDuration,
+                timeline
+            };
+
+        } catch (error) {
+            console.error('❌ Failed to generate linear timeline:', error);
+            return {
+                vehicle: vehicleId,
+                status: 'no_activity',
+                timeline: []
+            };
+        }
+    }
+
+    private async processTripStops(trip: Trip, timeline: TimelineEvent[]): Promise<void> {
+        if (!trip.points || trip.points.length < 3) return;
+
+        const stops: { start: TripPoint, end: TripPoint, duration: number }[] = [];
+        let potentialStopStart: TripPoint | null = null;
+        let lastMovingPoint: TripPoint = trip.points[0];
+
+        // Detect stops by looking for periods where vehicle doesn't move significantly
+        for (let i = 1; i < trip.points.length; i++) {
+            const currentPoint = trip.points[i];
+            const distanceFromLast = this.calculateDistance(
+                lastMovingPoint.latitude,
+                lastMovingPoint.longitude,
+                currentPoint.latitude,
+                currentPoint.longitude
+            );
+
+            // If we haven't moved much, this might be a stop
+            if (distanceFromLast < 0.1) { // Less than 0.1 miles
+                if (!potentialStopStart) {
+                    potentialStopStart = lastMovingPoint;
+                }
+            } else {
+                // We're moving again
+                if (potentialStopStart) {
+                    const stopDuration = (currentPoint.timestamp.getTime() - potentialStopStart.timestamp.getTime()) / (1000 * 60);
+                    
+                    // Only count as a stop if it was at least 5 minutes
+                    if (stopDuration >= 5) {
+                        stops.push({
+                            start: potentialStopStart,
+                            end: lastMovingPoint,
+                            duration: stopDuration
+                        });
+                    }
+                    potentialStopStart = null;
+                }
+                lastMovingPoint = currentPoint;
+            }
+        }
+
+        // Add stops to timeline
+        for (const stop of stops) {
+            timeline.push({
+                type: 'stop_start',
+                timestamp: stop.start.timestamp,
+                location: {
+                    latitude: stop.start.latitude,
+                    longitude: stop.start.longitude,
+                    address: stop.start.address
+                },
+                batteryLevel: stop.start.batteryLevel
+            });
+
+            timeline.push({
+                type: 'stop_end',
+                timestamp: stop.end.timestamp,
+                location: {
+                    latitude: stop.end.latitude,
+                    longitude: stop.end.longitude,
+                    address: stop.end.address
+                },
+                batteryLevel: stop.end.batteryLevel,
+                metadata: {
+                    stopDuration: stop.duration
+                }
+            });
+        }
+    }
+
+    private async getClientNameFromLocation(latitude: number, longitude: number): Promise<string | undefined> {
+        try {
+            // Import the client location service
+            const { clientLocationService } = await import('./clientLocations');
+            return await clientLocationService.findClientLocationMatch(latitude, longitude) || undefined;
+        } catch (error) {
+            console.warn('Failed to get client name from location:', error);
+            return undefined;
+        }
     }
 }
 
 export const tripHistoryService = new TripHistoryService();
+// Timeline service is exported from tripTimelineService.ts

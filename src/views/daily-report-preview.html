@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SparkLawn Daily Fleet Report - Live v2</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Navigation Menu */
+        .nav-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(135deg, #1a1f2e 0%, #2a3441 100%);
+            border-bottom: 2px solid #10b981;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 10000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-brand {
+            margin-right: 40px;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-brand img {
+            height: 32px;
+            width: auto;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-link {
+            padding: 8px 16px;
+            color: #e2e8f0;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .nav-link.active {
+            background: #10b981;
+            color: #0a0e1a;
+        }
+
+        .nav-user {
+            margin-left: auto;
+            color: #94a3b8;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sign-out-btn {
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: 1px solid #059669;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sign-out-btn:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            border-color: #047857;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Hamburger menu (hidden on desktop) */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            padding: 8px;
+            margin-left: auto;
+        }
+
+        .hamburger span {
+            width: 24px;
+            height: 3px;
+            background: #10b981;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .hamburger {
+                display: flex;
+            }
+
+            .nav-links {
+                position: fixed;
+                top: 60px;
+                left: 0;
+                right: 0;
+                background: #1a1f2e;
+                flex-direction: column;
+                padding: 20px;
+                gap: 12px;
+                transform: translateY(-100%);
+                opacity: 0;
+                pointer-events: none;
+                transition: all 0.3s ease;
+                border-bottom: 2px solid #10b981;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            }
+
+            .nav-links.active {
+                transform: translateY(0);
+                opacity: 1;
+                pointer-events: all;
+            }
+
+            .nav-link {
+                width: 100%;
+                text-align: center;
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            .nav-user {
+                position: fixed;
+                top: 60px;
+                left: 0;
+                right: 0;
+                background: #1a1f2e;
+                padding: 16px 20px;
+                justify-content: space-between;
+                border-top: 1px solid #334155;
+                transform: translateY(-100%);
+                opacity: 0;
+                pointer-events: none;
+                transition: all 0.3s ease;
+                margin-top: 216px;
+            }
+
+            .nav-links.active ~ .nav-user {
+                transform: translateY(0);
+                opacity: 1;
+                pointer-events: all;
+            }
+
+            .nav-brand {
+                margin-right: 0;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            padding-top: 80px;
+            font-size: 13px;
+        }
+
+        .pdf-container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 25px 35px;
+            border-bottom: 4px solid #047857;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .date-info {
+            text-align: right;
+        }
+
+        .report-date {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .generated-time {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        /* Summary Stats Bar */
+        .summary-bar {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .summary-stat {
+            background: rgba(255,255,255,0.2);
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .summary-stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .summary-stat-label {
+            font-size: 10px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Date Navigation */
+        .date-navigation {
+            background: #f9fafb;
+            padding: 15px 35px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .date-nav-button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .date-nav-button:hover {
+            background: #059669;
+        }
+
+        .date-nav-button:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .current-date-display {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .date-cache-indicator {
+            font-size: 11px;
+            color: #10b981;
+            margin-left: 8px;
+        }
+
+        /* Content */
+        .content {
+            padding: 30px 35px;
+        }
+
+        /* Vehicle Section */
+        .vehicle-section {
+            margin-bottom: 30px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .vehicle-header {
+            background: #f9fafb;
+            border-bottom: 2px solid #10b981;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .vehicle-name {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .vehicle-stats {
+            display: flex;
+            gap: 18px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .vehicle-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .vehicle-stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .vehicle-stat-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        /* Trips List - COMPACT */
+        .trips-list {
+            padding: 15px 20px;
+        }
+
+        .trip-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            margin-bottom: 3px;
+            border-radius: 4px;
+            background: #fafafa;
+            border-left: 3px solid #10b981;
+            font-size: 12px;
+        }
+
+        .trip-item:hover {
+            background: #f0f9ff;
+        }
+
+        .trip-time-span {
+            font-weight: 600;
+            color: #1f2937;
+            min-width: 140px;
+        }
+
+        .trip-route {
+            flex: 1;
+            color: #4b5563;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 12px;
+        }
+
+        .trip-arrow {
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        .client-badge-inline {
+            display: inline;
+            background: #10b981;
+            color: white;
+            font-size: 9px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            margin-left: 4px;
+        }
+
+        .trip-metrics-inline {
+            display: flex;
+            gap: 15px;
+            font-size: 11px;
+            color: #6b7280;
+            min-width: 220px;
+            justify-content: flex-end;
+        }
+
+        .trip-metric-inline {
+            white-space: nowrap;
+        }
+
+        /* Client Visits Section - NEW */
+        .client-visits-section {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 6px;
+            padding: 12px 15px;
+            margin: 15px 20px;
+        }
+
+        .client-visits-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .client-visit-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            margin-bottom: 4px;
+            background: white;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .client-visit-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .client-visit-name {
+            font-weight: 600;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .visit-type-badge {
+            font-size: 9px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+
+        .visit-type-client {
+            background: #10b981;
+            color: white;
+        }
+
+        .visit-type-other {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .client-visit-time {
+            color: #78716c;
+            font-weight: 400;
+            font-size: 11px;
+        }
+
+        .client-visit-time .duration {
+            font-weight: 700;
+            color: #059669;
+            font-size: 13px;
+            margin-left: 6px;
+        }
+
+        .trips-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0 20px 10px 20px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Vehicle Daily Summary */
+        .vehicle-summary {
+            background: #f0fdf4;
+            border-top: 1px solid #bbf7d0;
+            padding: 14px 20px;
+        }
+
+        .vehicle-summary-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #065f46;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .vehicle-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .vehicle-summary-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .vehicle-summary-label {
+            font-size: 10px;
+            color: #047857;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+        }
+
+        .vehicle-summary-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #065f46;
+        }
+
+        /* Footer */
+        .footer {
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            padding: 16px 35px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 11px;
+        }
+
+        .footer-logo {
+            font-weight: 600;
+            color: #10b981;
+        }
+
+        /* No Activity Message */
+        .no-activity {
+            padding: 30px;
+            text-align: center;
+            color: #9ca3af;
+            font-style: italic;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Menu -->
+    <nav class="nav-menu">
+        <div class="nav-brand">
+            <img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=768,fit=crop,q=95/AMqajOBKjaiq4bNK/sparklawn-logo_white-ALpbzbLkvNc5b3nv.png" alt="SparkLawn">
+        </div>
+        <div class="nav-links" id="navLinks">
+            <a href="/fleet-advanced" class="nav-link">Fleet Dashboard</a>
+            <a href="/client-management" class="nav-link">Client Locations</a>
+            <a href="/trip-modal-preview" class="nav-link">Today's Trip Detail</a>
+            <a href="/daily-report-preview" class="nav-link active">Daily Report</a>
+        </div>
+        <div class="nav-user" id="navUser">
+            <span id="nav-user-email"></span>
+            <a href="/auth/logout" class="sign-out-btn">
+                <span>🚪</span>
+                <span>Sign Out</span>
+            </a>
+        </div>
+        <div class="hamburger" id="hamburger" onclick="toggleMobileMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+
+    <div class="pdf-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-top">
+                <div class="logo">
+                    🌱 SparkLawn Fleet Report
+                </div>
+                <div class="date-info">
+                    <div class="report-date">Daily Trip Summary</div>
+                    <div class="generated-time">Sunday, September 29, 2025</div>
+                </div>
+            </div>
+
+            <!-- Fleet Summary Stats -->
+            <div class="summary-bar">
+                <div class="summary-stat">
+                    <div class="summary-stat-value">124.8</div>
+                    <div class="summary-stat-label">Total Miles</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value">12</div>
+                    <div class="summary-stat-label">Total Trips</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value">6h 24m</div>
+                    <div class="summary-stat-label">Drive Time</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value">4h 35m</div>
+                    <div class="summary-stat-label">Client Time</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-value">4</div>
+                    <div class="summary-stat-label">Active Vehicles</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Navigation -->
+        <div class="date-navigation">
+            <button class="date-nav-button" onclick="changeDateBy(-1)">← Previous Day</button>
+            <div class="current-date-display" id="currentDateDisplay">
+                Loading...
+            </div>
+            <button class="date-nav-button" onclick="changeDateBy(1)" id="nextDayButton">Next Day →</button>
+        </div>
+
+        <!-- Content -->
+        <div class="content" id="reportContent">
+            <div style="padding: 40px; text-align: center; color: #64748b;">
+                <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
+                <div>Loading today's trip data...</div>
+            </div>
+            <!-- Dynamic content will be inserted here by JavaScript -->
+        </div>
+
+        <!-- OLD MOCK DATA REMOVED - NOW USING LIVE DATA FROM JAVASCRIPT -->
+        <!-- Footer -->
+        <div class="footer">
+            <div style="margin-bottom: 6px;">
+                <span class="footer-logo">SparkLawn Fleet Dashboard</span> • Powered by Ford Telematics API
+            </div>
+            <div>
+                Report generated at 7:00 PM CT • Data covers 12:00 AM - 7:00 PM
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const navLinks = document.getElementById('navLinks');
+            const hamburger = document.getElementById('hamburger');
+            navLinks.classList.toggle('active');
+            hamburger.classList.toggle('active');
+        }
+
+        // Vehicle name mapping
+        const vehicleNames = {
+            '1FTVW1EL3NWG00285': 'Lightning 1',
+            '1FT6W1EV3PWG37779': 'Lightning 2',
+            '1FTVW1EV3NWG07402': 'Lightning 3',
+            '1FTBW1XK6PKA30591': 'eTransit 1'
+        };
+
+        // Format time duration
+        function formatDuration(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = Math.round(minutes % 60);
+            if (hours > 0) {
+                return `${hours}h ${mins}m`;
+            }
+            return `${mins}m`;
+        }
+
+        // Date navigation state
+        let currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0); // Normalize to midnight
+
+        // LocalStorage cache management
+        const CACHE_KEY_PREFIX = 'daily_report_';
+        const CACHE_VERSION = 'v5'; // Increment this to invalidate all old caches
+        const CACHE_EXPIRY_DAYS = 30; // Keep reports for 30 days
+
+        // Clear old cache version on page load
+        const storedVersion = localStorage.getItem('cache_version');
+        if (storedVersion !== CACHE_VERSION) {
+            console.log('🧹 Clearing old cache version:', storedVersion, '→', CACHE_VERSION);
+            const keys = Object.keys(localStorage);
+            keys.filter(k => k.startsWith(CACHE_KEY_PREFIX)).forEach(key => {
+                localStorage.removeItem(key);
+            });
+            localStorage.setItem('cache_version', CACHE_VERSION);
+        }
+
+        function getCacheKey(date) {
+            return CACHE_KEY_PREFIX + formatDateKey(date);
+        }
+
+        function formatDateKey(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getDateForDisplay(date) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            if (date.getTime() === today.getTime()) {
+                return 'Today - ' + date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            } else if (date.getTime() === yesterday.getTime()) {
+                return 'Yesterday - ' + date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            } else {
+                return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            }
+        }
+
+        function updateDateDisplay() {
+            const displayEl = document.getElementById('currentDateDisplay');
+            const isCached = !!localStorage.getItem(getCacheKey(currentDate));
+
+            displayEl.innerHTML = getDateForDisplay(currentDate) +
+                (isCached ? '<span class="date-cache-indicator">📦 Cached</span>' : '');
+
+            // Disable next button if showing today
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            document.getElementById('nextDayButton').disabled = (currentDate.getTime() >= today.getTime());
+        }
+
+        function changeDateBy(days) {
+            currentDate.setDate(currentDate.getDate() + days);
+            console.log('📅 Date changed to:', formatDateKey(currentDate), '(' + getDateForDisplay(currentDate) + ')');
+            updateDateDisplay();
+            loadDailyReport();
+        }
+
+        function getCachedReport() {
+            try {
+                const cached = localStorage.getItem(getCacheKey(currentDate));
+                if (cached) {
+                    const data = JSON.parse(cached);
+                    // Check if cache is still valid (within expiry)
+                    const cacheDate = new Date(data.timestamp);
+                    const daysSinceCached = (Date.now() - cacheDate.getTime()) / (1000 * 60 * 60 * 24);
+
+                    if (daysSinceCached < CACHE_EXPIRY_DAYS) {
+                        console.log('✅ Using cached report for', formatDateKey(currentDate));
+                        return data.report;
+                    } else {
+                        // Cache expired, remove it
+                        localStorage.removeItem(getCacheKey(currentDate));
+                    }
+                }
+            } catch (error) {
+                console.error('Error reading cache:', error);
+            }
+            return null;
+        }
+
+        function cacheReport(reportHTML) {
+            try {
+                const cacheData = {
+                    timestamp: new Date().toISOString(),
+                    report: reportHTML
+                };
+                localStorage.setItem(getCacheKey(currentDate), JSON.stringify(cacheData));
+                console.log('💾 Cached report for', formatDateKey(currentDate));
+                updateDateDisplay(); // Update to show cache indicator
+            } catch (error) {
+                console.error('Error caching report:', error);
+                // If quota exceeded, clear old cache entries
+                if (error.name === 'QuotaExceededError') {
+                    clearOldCache();
+                }
+            }
+        }
+
+        function clearOldCache() {
+            console.log('🧹 Clearing old cache entries...');
+            const keys = Object.keys(localStorage);
+            const reportKeys = keys.filter(k => k.startsWith(CACHE_KEY_PREFIX));
+
+            // Sort by date and remove oldest entries
+            reportKeys.sort().slice(0, -7).forEach(key => {
+                localStorage.removeItem(key);
+            });
+        }
+
+        // Format time to AM/PM
+        function formatTime(date) {
+            return date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        // Fetch and render daily report
+        async function loadDailyReport() {
+            try {
+                // Check cache first
+                const cachedReport = getCachedReport();
+                if (cachedReport) {
+                    // Update header even when using cache
+                    document.querySelector('.generated-time').textContent = getDateForDisplay(currentDate);
+
+                    // Parse cached data to update stats
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(cachedReport, 'text/html');
+                    const vehicles = doc.querySelectorAll('.vehicle-section');
+
+                    let totalMiles = 0;
+                    let totalTrips = 0;
+                    let totalDriveTime = 0;
+                    let totalClientMinutes = 0;
+
+                    vehicles.forEach(vehicleSection => {
+                        const summaryItems = vehicleSection.querySelectorAll('.vehicle-summary-value');
+                        if (summaryItems.length >= 4) {
+                            totalTrips += parseInt(summaryItems[0].textContent) || 0;
+                            totalMiles += parseFloat(summaryItems[1].textContent) || 0;
+
+                            // Parse duration strings (e.g., "1h 23m" or "45m")
+                            const driveTimeText = summaryItems[2].textContent;
+                            const clientTimeText = summaryItems[3].textContent;
+
+                            totalDriveTime += parseDuration(driveTimeText);
+                            totalClientMinutes += parseDuration(clientTimeText);
+                        }
+                    });
+
+                    const statValues = document.querySelectorAll('.summary-stat-value');
+                    statValues[0].textContent = totalMiles.toFixed(1);
+                    statValues[1].textContent = totalTrips;
+                    statValues[2].textContent = formatDuration(totalDriveTime);
+                    statValues[3].textContent = formatDuration(totalClientMinutes);
+                    statValues[4].textContent = vehicles.length;
+
+                    document.getElementById('reportContent').innerHTML = cachedReport;
+                    return;
+                }
+
+                // Helper function to parse duration strings back to minutes
+                function parseDuration(durationStr) {
+                    let minutes = 0;
+                    const hourMatch = durationStr.match(/(\d+)h/);
+                    const minMatch = durationStr.match(/(\d+)m/);
+                    if (hourMatch) minutes += parseInt(hourMatch[1]) * 60;
+                    if (minMatch) minutes += parseInt(minMatch[1]);
+                    return minutes;
+                }
+
+                // Show loading state
+                document.getElementById('reportContent').innerHTML = `
+                    <div style="padding: 40px; text-align: center; color: #64748b;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
+                        <div>Loading report for ${getDateForDisplay(currentDate)}...</div>
+                    </div>
+                `;
+
+                // Format date for API (YYYY-MM-DD)
+                const dateStr = formatDateKey(currentDate);
+                console.log('🔄 Fetching fresh data for date:', dateStr);
+
+                // Fetch timeline data for each vehicle with date parameter
+                const allVehicles = [
+                    { id: '1FTVW1EL3NWG00285', name: 'Lightning 1' },
+                    { id: '1FT6W1EV3PWG37779', name: 'Lightning 2' },
+                    { id: '1FTVW1EV3NWG07402', name: 'Lightning 3' },
+                    { id: '1FTBW1XK6PKA30591', name: 'eTransit 1' }
+                ];
+
+                // Fetch timeline data for all vehicles in parallel
+                const timelinePromises = allVehicles.map(vehicle =>
+                    fetch(`/api/trips/timeline/${vehicle.id}?date=${dateStr}`)
+                        .then(res => res.json())
+                        .then(data => ({ vehicle, timeline: data.timeline }))
+                        .catch(err => {
+                            console.error(`Failed to load timeline for ${vehicle.name}:`, err);
+                            return { vehicle, timeline: null };
+                        })
+                );
+
+                const timelineResults = await Promise.all(timelinePromises);
+                console.log('Loaded timeline data for all vehicles:', timelineResults);
+
+                // Group trips by vehicle and flatten all trips
+                const tripsByVehicle = {};
+                const allTrips = [];
+
+                timelineResults.forEach(({ vehicle, timeline }) => {
+                    if (timeline && timeline.trips && timeline.trips.length > 0) {
+                        // Convert timeline trips to our format
+                        const trips = timeline.trips.map(trip => ({
+                            vehicleId: vehicle.id,
+                            vehicleName: vehicle.name,
+                            ignitionOnTime: trip.startTime,
+                            ignitionOffTime: trip.endTime,
+                            distanceTraveled: trip.distance || 0,
+                            totalRunTime: Math.round((new Date(trip.endTime) - new Date(trip.startTime)) / 60000),
+                            startLocation: {
+                                address: trip.startLocation?.address || 'Unknown',
+                                latitude: trip.startLocation?.latitude || 0,
+                                longitude: trip.startLocation?.longitude || 0,
+                                clientName: trip.startLocation?.clientName || null
+                            },
+                            endLocation: {
+                                address: trip.endLocation?.address || 'Unknown',
+                                latitude: trip.endLocation?.latitude || 0,
+                                longitude: trip.endLocation?.longitude || 0,
+                                clientName: trip.endLocation?.clientName || null
+                            }
+                        }));
+
+                        tripsByVehicle[vehicle.id] = trips;
+                        allTrips.push(...trips);
+                    }
+                });
+
+                // Calculate fleet-wide totals
+                const totalMiles = allTrips.reduce((sum, trip) => sum + (trip.distanceTraveled || 0), 0);
+                const totalTrips = allTrips.length;
+                const totalDriveTime = allTrips.reduce((sum, trip) => sum + (trip.totalRunTime || 0), 0);
+
+                // Calculate client time and collect visit data
+                const visitsByLocation = new Map();
+
+                allTrips.forEach(trip => {
+                    // Track end location visits (where vehicle stopped)
+                    if (trip.endLocation && trip.endLocation.address) {
+                        const locationKey = trip.endLocation.address;
+                        // Exclude McRay Shop and home base (🏠) from client visits
+                        const isHomeBase = trip.endLocation.clientName?.includes('🏠') ||
+                                         trip.endLocation.clientName?.includes('McRay Shop') ||
+                                         trip.endLocation.address?.includes('McRay Shop');
+                        const isClient = trip.endLocation.clientName && !isHomeBase;
+
+                        if (!visitsByLocation.has(locationKey)) {
+                            visitsByLocation.set(locationKey, {
+                                name: trip.endLocation.address,
+                                isClient: isClient,
+                                totalMinutes: 0,
+                                latitude: trip.endLocation.latitude,
+                                longitude: trip.endLocation.longitude,
+                                visits: []
+                            });
+                        }
+
+                        // Find the next trip from this location to calculate dwell time
+                        const nextTrip = allTrips.find(t =>
+                            t.vehicleId === trip.vehicleId &&
+                            new Date(t.ignitionOnTime) > new Date(trip.ignitionOffTime) &&
+                            Math.abs(new Date(t.ignitionOnTime) - new Date(trip.ignitionOffTime)) < 24 * 60 * 60 * 1000
+                        );
+
+                        if (nextTrip) {
+                            const dwellMinutes = (new Date(nextTrip.ignitionOnTime) - new Date(trip.ignitionOffTime)) / (1000 * 60);
+                            const visit = visitsByLocation.get(locationKey);
+                            visit.totalMinutes += dwellMinutes;
+                            visit.visits.push({ trip, dwellMinutes });
+                        } else {
+                            // Check if viewing today or a historical date
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const reportDate = new Date(currentDate);
+                            reportDate.setHours(0, 0, 0, 0);
+
+                            let endTime;
+                            if (reportDate.getTime() === today.getTime()) {
+                                // Today: use current time for ongoing visits
+                                endTime = new Date();
+                            } else {
+                                // Historical date: use end of that day
+                                endTime = new Date(currentDate);
+                                endTime.setHours(23, 59, 59, 999);
+                            }
+
+                            const dwellMinutes = (endTime - new Date(trip.ignitionOffTime)) / (1000 * 60);
+                            const visit = visitsByLocation.get(locationKey);
+                            visit.totalMinutes += dwellMinutes;
+                            visit.visits.push({ trip, dwellMinutes });
+                        }
+                    }
+                });
+
+                // Calculate total client time
+                let totalClientMinutes = 0;
+                visitsByLocation.forEach(visit => {
+                    if (visit.isClient) {
+                        totalClientMinutes += visit.totalMinutes;
+                    }
+                });
+
+                const activeVehicles = Object.keys(tripsByVehicle).length;
+
+                // Update header with live data
+                document.querySelector('.generated-time').textContent = getDateForDisplay(currentDate);
+                const statValues = document.querySelectorAll('.summary-stat-value');
+                statValues[0].textContent = totalMiles.toFixed(1);
+                statValues[1].textContent = totalTrips;
+                statValues[2].textContent = formatDuration(totalDriveTime);
+                statValues[3].textContent = formatDuration(totalClientMinutes);
+                statValues[4].textContent = activeVehicles;
+
+                // Build vehicle sections
+                const contentDiv = document.getElementById('reportContent');
+                contentDiv.innerHTML = ''; // Clear loading state
+
+                // Sort vehicles by name
+                const sortedVehicles = Object.entries(tripsByVehicle).sort((a, b) => {
+                    const nameA = vehicleNames[a[0]] || a[0];
+                    const nameB = vehicleNames[b[0]] || b[0];
+                    return nameA.localeCompare(nameB);
+                });
+
+                sortedVehicles.forEach(([vehicleId, trips]) => {
+                    const vehicleName = vehicleNames[vehicleId] || vehicleId;
+
+                    // Calculate vehicle totals
+                    const vehicleMiles = trips.reduce((sum, t) => sum + t.distanceTraveled, 0);
+                    const vehicleDriveTime = trips.reduce((sum, t) => sum + t.totalRunTime, 0);
+
+                    // Calculate vehicle-specific client time and visits
+                    const vehicleVisits = [];
+
+                    trips.forEach(trip => {
+                        if (trip.endLocation && trip.endLocation.address) {
+                            const locationName = trip.endLocation.address;
+                            // Exclude McRay Shop and home base (🏠) from client visits
+                            const isHomeBase = trip.endLocation.clientName?.includes('🏠') ||
+                                             trip.endLocation.clientName?.includes('McRay Shop') ||
+                                             trip.endLocation.address?.includes('McRay Shop');
+                            const isClient = trip.endLocation.clientName && !isHomeBase;
+
+                            const arrivalTime = new Date(trip.ignitionOffTime);
+                            const nextTrip = trips.find(t =>
+                                new Date(t.ignitionOnTime) > new Date(trip.ignitionOffTime)
+                            );
+
+                            // For last trip of the day, calculate departure time correctly
+                            let departureTime;
+                            if (nextTrip) {
+                                departureTime = new Date(nextTrip.ignitionOnTime);
+                            } else {
+                                // Check if viewing today or a historical date
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                const reportDate = new Date(currentDate);
+                                reportDate.setHours(0, 0, 0, 0);
+
+                                if (reportDate.getTime() === today.getTime()) {
+                                    // Today: use current time for ongoing visits
+                                    departureTime = new Date();
+                                } else {
+                                    // Historical date: use end of that day
+                                    departureTime = new Date(currentDate);
+                                    departureTime.setHours(23, 59, 59, 999);
+                                }
+                            }
+                            const dwellMinutes = (departureTime - arrivalTime) / (1000 * 60);
+
+                            vehicleVisits.push({
+                                name: locationName,
+                                isClient: isClient,
+                                arrivalTime: arrivalTime,
+                                departureTime: departureTime,
+                                totalMinutes: dwellMinutes,
+                                latitude: trip.endLocation.latitude,
+                                longitude: trip.endLocation.longitude
+                            });
+                        }
+                    });
+
+                    let vehicleClientMinutes = 0;
+                    vehicleVisits.forEach(visit => {
+                        if (visit.isClient) {
+                            vehicleClientMinutes += visit.totalMinutes;
+                        }
+                    });
+
+                    // Get battery info from first and last trip
+                    const firstTrip = trips[0];
+                    const lastTrip = trips[trips.length - 1];
+
+                    // Build vehicle section HTML
+                    let vehicleHTML = `
+                        <div class="vehicle-section">
+                            <div class="vehicle-header">
+                                <div class="vehicle-name">
+                                    ⚡ ${vehicleName}
+                                </div>
+                                <div class="vehicle-stats">
+                                    <div class="vehicle-stat">
+                                        <div class="vehicle-stat-label">Miles</div>
+                                        <div class="vehicle-stat-value">${vehicleMiles.toFixed(1)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                    `;
+
+                    // Add Visit Summary if there are visits
+                    if (vehicleVisits.length > 0) {
+                        vehicleHTML += `
+                            <div class="client-visits-section">
+                                <div class="client-visits-title">⏱️ Visit Summary</div>
+                        `;
+
+                        // Filter visits longer than 5 minutes - keep chronological order
+                        const filteredVisits = vehicleVisits.filter(v => v.totalMinutes > 5);
+
+                        filteredVisits.forEach(visit => {
+                            const badgeClass = visit.isClient ? 'visit-type-client' : 'visit-type-other';
+                            const badgeText = visit.isClient ? 'Client' : 'Other';
+                            const mapsLink = `https://www.google.com/maps/search/?api=1&query=${visit.latitude},${visit.longitude}`;
+                            const arrivalTimeStr = visit.arrivalTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                            const departureTimeStr = visit.departureTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+                            vehicleHTML += `
+                                <div class="client-visit-item">
+                                    <div class="client-visit-name">
+                                        <a href="${mapsLink}" target="_blank" style="color: inherit; text-decoration: none;">${visit.name}</a>
+                                        <span class="visit-type-badge ${badgeClass}">${badgeText}</span>
+                                    </div>
+                                    <div class="client-visit-time">${arrivalTimeStr} - ${departureTimeStr}<span class="duration">(${formatDuration(visit.totalMinutes)})</span></div>
+                                </div>
+                            `;
+                        });
+
+                        vehicleHTML += `</div>`;
+                    }
+
+                    // Add Trip Summary
+                    vehicleHTML += `
+                        <div class="trips-section-title">🚗 Trip Summary</div>
+                        <div class="trips-list">
+                    `;
+
+                    trips.forEach(trip => {
+                        const startTime = formatTime(new Date(trip.ignitionOnTime));
+                        const endTime = formatTime(new Date(trip.ignitionOffTime));
+                        const startLocation = trip.startLocation.address || 'Unknown';
+                        const endLocation = trip.endLocation.address || 'Unknown';
+                        const startMapsLink = `https://www.google.com/maps/search/?api=1&query=${trip.startLocation.latitude},${trip.startLocation.longitude}`;
+                        const endMapsLink = `https://www.google.com/maps/search/?api=1&query=${trip.endLocation.latitude},${trip.endLocation.longitude}`;
+                        const isEndClient = trip.endLocation.clientName ? true : false;
+                        const clientBadge = isEndClient ? '<span class="client-badge-inline">Client</span>' : '';
+
+                        vehicleHTML += `
+                            <div class="trip-item">
+                                <div class="trip-time-span">${startTime} - ${endTime}</div>
+                                <div class="trip-route">
+                                    <a href="${startMapsLink}" target="_blank" style="color: inherit; text-decoration: none;">${startLocation}</a>
+                                    <span class="trip-arrow">→</span>
+                                    <a href="${endMapsLink}" target="_blank" style="color: inherit; text-decoration: none;">${endLocation}${clientBadge}</a>
+                                </div>
+                                <div class="trip-metrics-inline">
+                                    <span class="trip-metric-inline">${formatDuration(trip.totalRunTime)}</span>
+                                    <span class="trip-metric-inline">${trip.distanceTraveled.toFixed(1)} mi</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    vehicleHTML += `</div>`;
+
+                    // Add vehicle summary
+                    vehicleHTML += `
+                        <div class="vehicle-summary">
+                            <div class="vehicle-summary-title">Daily Summary - ${vehicleName}</div>
+                            <div class="vehicle-summary-grid">
+                                <div class="vehicle-summary-item">
+                                    <div class="vehicle-summary-label">Total Trips</div>
+                                    <div class="vehicle-summary-value">${trips.length}</div>
+                                </div>
+                                <div class="vehicle-summary-item">
+                                    <div class="vehicle-summary-label">Total Miles</div>
+                                    <div class="vehicle-summary-value">${vehicleMiles.toFixed(1)}</div>
+                                </div>
+                                <div class="vehicle-summary-item">
+                                    <div class="vehicle-summary-label">Drive Time</div>
+                                    <div class="vehicle-summary-value">${formatDuration(vehicleDriveTime)}</div>
+                                </div>
+                                <div class="vehicle-summary-item">
+                                    <div class="vehicle-summary-label">Client Time</div>
+                                    <div class="vehicle-summary-value">${formatDuration(vehicleClientMinutes)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+
+                    contentDiv.innerHTML += vehicleHTML;
+                });
+
+                // Add vehicles with no activity
+                const allVehicleIds = ['1FTVW1EL3NWG00285', '1FT6W1EV3PWG37779', '1FTVW1EV3NWG07402', '1FTBW1XK6PKA30591'];
+                const activeVehicleIds = Object.keys(tripsByVehicle);
+                const inactiveVehicles = allVehicleIds.filter(id => !activeVehicleIds.includes(id));
+
+                inactiveVehicles.forEach(vehicleId => {
+                    const vehicleName = vehicleNames[vehicleId];
+                    contentDiv.innerHTML += `
+                        <div class="vehicle-section">
+                            <div class="vehicle-header">
+                                <div class="vehicle-name">
+                                    ⚡ ${vehicleName}
+                                </div>
+                            </div>
+                            <div class="no-activity">
+                                No trips recorded today
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // Cache the report HTML for future visits
+                cacheReport(contentDiv.innerHTML);
+
+                console.log('Daily report loaded successfully');
+
+            } catch (error) {
+                console.error('Error loading daily report:', error);
+                document.getElementById('reportContent').innerHTML = `
+                    <div style="padding: 40px; text-align: center; color: #ef4444;">
+                        <h3>Error Loading Trip Data</h3>
+                        <p style="margin-top: 10px; color: #6b7280;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Load report on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDateDisplay();
+            loadDailyReport();
+        });
+    </script>
+</body>
+</html>

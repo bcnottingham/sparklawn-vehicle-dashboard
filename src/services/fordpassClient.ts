@@ -1,9 +1,18 @@
 import fetch from 'node-fetch';
+import { createHash, randomBytes } from 'crypto';
 
-// FordPass API endpoints (reverse engineered)
-const FORDPASS_BASE_URL = 'https://usapi.cv.ford.com';
+// FordPass API endpoints (updated August 2024)
+const FORDPASS_BASE_URL = 'https://usapi.cv.ford.com/api';
+const GUARD_URL = 'https://api.mps.ford.com/api';
 const AUTH_URL = 'https://sso.ci.ford.com';
-const APPLICATION_ID = '71A3AD0A-CF46-4CCF-B473-FC7FE5BC4592';
+const AUTONOMIC_URL = 'https://api.autonomic.ai/v1';
+const AUTONOMIC_ACCOUNT_URL = 'https://accounts.autonomic.ai/v1';
+const APPLICATION_ID = '9fb503e0-715b-47e8-adfd-ad4b7770f73b';
+
+// OAuth2 constants from working 1.70 implementation
+const OAUTH_CLIENT_ID = '9fb503e0-715b-47e8-adfd-ad4b7770f73b';
+const OAUTH_REDIRECT_URI = 'fordapp://userauthorized';
+const OAUTH_SCOPE = 'openid';
 
 export interface FordPassConfig {
     username: string;
@@ -111,6 +120,8 @@ export class FordPassClient {
     private accessToken?: string;
     private refreshToken?: string;
     private tokenExpiry?: Date;
+    private codeVerifier?: string;
+    private codeChallenge?: string;
     
     constructor(config: FordPassConfig) {
         this.username = config.username;
@@ -118,65 +129,125 @@ export class FordPassClient {
         this.vin = config.vin;
     }
     
-    private async authenticate(): Promise<void> {
+    // OAuth2 helper methods from working 1.70 implementation
+    private generateCodeVerifier(): string {
+        return randomBytes(32).toString('base64url');
+    }
+    
+    private generateCodeChallenge(verifier: string): string {
+        return createHash('sha256').update(verifier).digest('base64url');
+    }
+    
+    private generateAuthorizationUrl(): string {
+        this.codeVerifier = this.generateCodeVerifier();
+        this.codeChallenge = this.generateCodeChallenge(this.codeVerifier);
+        
+        const params = new URLSearchParams({
+            'client_id': OAUTH_CLIENT_ID,
+            'redirect_uri': OAUTH_REDIRECT_URI,
+            'response_type': 'code',
+            'scope': OAUTH_SCOPE,
+            'code_challenge': this.codeChallenge,
+            'code_challenge_method': 'S256'
+        });
+        
+        return `${AUTH_URL}/oidc/endpoint/default/authorize?${params.toString()}`;
+    }
+    
+    // Direct password authentication method (bypass OAuth2 due to Ford SSO DNS issues)
+    public async authenticateDirectly(): Promise<void> {
         try {
-            console.log('🔐 Authenticating with FordPass...');
+            console.log('🔐 Attempting direct FordPass authentication...');
             
-            // Step 1: Get auth code
-            const authResponse = await fetch(`${AUTH_URL}/oidc/endpoint/default/authorize`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                    'Accept-Language': 'en-us',
-                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_6_1 like Mac OS X) AppleWebKit/605.1.15'
-                }
-            });
-            
-            // Step 2: Login with credentials
-            const loginData = new URLSearchParams({
-                'operation': 'verify',
-                'login-form-type': 'pwd',
+            const tokenData = new URLSearchParams({
+                'client_id': '9fb503e0-715b-47e8-adfd-ad4b7770f73b',
+                'grant_type': 'password',
                 'username': this.username,
                 'password': this.password
             });
             
-            const loginResponse = await fetch(`${AUTH_URL}/oidc/endpoint/default/authorize`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_6_1 like Mac OS X) AppleWebKit/605.1.15'
-                },
-                body: loginData
-            });
-            
-            // Step 3: Get access token
-            const tokenData = {
-                'client_id': APPLICATION_ID,
-                'grant_type': 'authorization_code',
-                'code': 'extracted_auth_code' // This needs to be extracted from the login response
-            };
-            
-            const tokenResponse = await fetch(`${AUTH_URL}/oidc/endpoint/default/token`, {
+            const tokenResponse = await fetch('https://fcis.ice.ibmcloud.com/v1.0/endpoint/default/token', {
                 method: 'POST',
                 headers: {
                     'Accept': '*/*',
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'User-Agent': 'FordPass/5 CFNetwork/1197 Darwin/20.0.0'
+                    'Accept-Language': 'en-us',
+                    'User-Agent': 'fordpass-na/353 CFNetwork/1121.2.2 Darwin/19.3.0',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                body: new URLSearchParams(tokenData)
+                body: tokenData
             });
+            
+            if (!tokenResponse.ok) {
+                throw new Error(`Direct authentication failed: ${tokenResponse.status} ${tokenResponse.statusText}`);
+            }
             
             const tokenResult = await tokenResponse.json() as any;
             this.accessToken = tokenResult.access_token;
             this.refreshToken = tokenResult.refresh_token;
             this.tokenExpiry = new Date(Date.now() + (tokenResult.expires_in * 1000));
             
-            console.log('✅ FordPass authentication successful');
+            console.log('✅ FordPass direct authentication successful');
         } catch (error) {
-            console.error('❌ FordPass authentication failed:', error);
-            throw new Error('FordPass authentication failed');
+            console.error('❌ Direct authentication failed:', error);
+            throw new Error('FordPass direct authentication failed');
         }
+    }
+    
+    // Public method to get authorization URL for manual token capture (fallback)
+    public getAuthorizationUrl(): string {
+        console.log('⚠️ Ford SSO domain has DNS issues. Trying direct authentication instead...');
+        return 'Direct authentication will be attempted automatically';
+    }
+    
+    // Method to exchange authorization code for tokens
+    public async exchangeCodeForTokens(authCode: string): Promise<void> {
+        if (!this.codeVerifier) {
+            throw new Error('Code verifier not generated. Call getAuthorizationUrl() first.');
+        }
+        
+        try {
+            console.log('🔄 Exchanging authorization code for tokens...');
+            
+            const tokenData = new URLSearchParams({
+                'client_id': OAUTH_CLIENT_ID,
+                'grant_type': 'authorization_code',
+                'code': authCode,
+                'redirect_uri': OAUTH_REDIRECT_URI,
+                'code_verifier': this.codeVerifier
+            });
+            
+            const tokenResponse = await fetch('https://fcis.ice.ibmcloud.com/v1.0/endpoint/default/token', {
+                method: 'POST',
+                headers: {
+                    'Accept': '*/*',
+                    'Accept-Language': 'en-us',
+                    'User-Agent': 'fordpass-na/353 CFNetwork/1121.2.2 Darwin/19.3.0',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: tokenData
+            });
+            
+            if (!tokenResponse.ok) {
+                throw new Error(`Token exchange failed: ${tokenResponse.status} ${tokenResponse.statusText}`);
+            }
+            
+            const tokenResult = await tokenResponse.json() as any;
+            this.accessToken = tokenResult.access_token;
+            this.refreshToken = tokenResult.refresh_token;
+            this.tokenExpiry = new Date(Date.now() + (tokenResult.expires_in * 1000));
+            
+            console.log('✅ FordPass OAuth2 tokens obtained successfully');
+        } catch (error) {
+            console.error('❌ Token exchange failed:', error);
+            throw new Error('FordPass token exchange failed');
+        }
+    }
+    
+    private async authenticate(): Promise<void> {
+        // Use direct authentication method
+        await this.authenticateDirectly();
     }
     
     private async ensureValidToken(): Promise<void> {
@@ -193,10 +264,11 @@ export class FordPassClient {
             headers: {
                 'Accept': '*/*',
                 'Accept-Language': 'en-us',
-                'Authorization': `Bearer ${this.accessToken}`,
+                'User-Agent': 'fordpass-na/353 CFNetwork/1121.2.2 Darwin/19.3.0',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Application-Id': '71A3AD0A-CF46-4CCF-B473-FC7FE5BC4592',
                 'Content-Type': 'application/json',
-                'Application-Id': APPLICATION_ID,
-                'User-Agent': 'FordPass/5 CFNetwork/1197 Darwin/20.0.0'
+                'auth-token': this.accessToken || ''
             },
             body: body ? JSON.stringify(body) : undefined
         });

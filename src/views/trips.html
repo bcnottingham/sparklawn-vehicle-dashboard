@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SparkLawn Fleet - Trip Analytics (Updated)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0f1c 0%, #1a1f35 25%, #2a2f45 50%, #1a1f35 75%, #0a0f1c 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header - exact match to fleet-advanced */
+        .header {
+            background: rgba(10, 15, 28, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #10b981, #059669);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .nav-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            color: #10b981;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.5);
+            transform: translateY(-1px);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            height: calc(100vh - 100px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: rgba(10, 15, 28, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            height: fit-content;
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-section {
+            margin-bottom: 2rem;
+        }
+
+        .filter-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #10b981;
+        }
+
+        .filter-option {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-option:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+
+        .filter-option.selected {
+            background: rgba(16, 185, 129, 0.3);
+            border-color: #10b981;
+        }
+
+        .trip-item {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .trip-item:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .trip-item.selected {
+            background: rgba(16, 185, 129, 0.3);
+            border-color: #10b981;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .trip-vehicle {
+            font-weight: 600;
+            color: #10b981;
+            margin-bottom: 0.25rem;
+        }
+
+        .trip-time {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 0.25rem;
+        }
+
+        .trip-location {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+        }
+
+        /* Advanced Filters */
+        .filter-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .filter-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.15);
+        }
+
+        .date-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .date-row input {
+            flex: 1;
+        }
+
+        /* Show All Trips Button */
+        .show-all-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            color: #10b981;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .show-all-btn:hover {
+            background: rgba(16, 185, 129, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Main Content */
+        .main-content {
+            background: rgba(10, 15, 28, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .content-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(16, 185, 129, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #10b981;
+        }
+
+        .trip-count {
+            background: rgba(16, 185, 129, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #10b981;
+        }
+
+        /* Map Container */
+        .map-container {
+            height: calc(100vh - 250px);
+            position: relative;
+        }
+
+        #tripMap {
+            width: 100%;
+            height: 100%;
+        }
+
+        .map-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #10b981;
+            font-size: 1.1rem;
+        }
+
+        /* Trip Details Panel */
+        .trip-details {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            right: 1rem;
+            background: rgba(10, 15, 28, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .trip-details.visible {
+            display: block;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .detail-value {
+            color: #10b981;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 250px 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            .sidebar {
+                order: 2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <span style="font-size: 1.5rem;">🌱</span>
+                <h1>SparkLawn Fleet</h1>
+            </div>
+            <div class="header-actions">
+                <a href="/" class="nav-btn">← Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Advanced Filters -->
+            <div class="filter-section">
+                <div class="filter-title">Trip Filters</div>
+                
+                <!-- Date Range -->
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 0.5rem; display: block;">Date Range</label>
+                    <div class="date-row">
+                        <input type="date" class="filter-input" id="startDate" value="2025-09-09">
+                        <input type="date" class="filter-input" id="endDate" value="2025-09-09">
+                    </div>
+                </div>
+
+                <!-- Client/Property Search -->
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 0.5rem; display: block;">Client/Property</label>
+                    <input type="text" class="filter-input" id="clientSearch" placeholder="Search client or property name...">
+                </div>
+
+                <!-- Job Number Search -->
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 0.5rem; display: block;">Job Number</label>
+                    <input type="text" class="filter-input" id="jobSearch" placeholder="Enter job number...">
+                </div>
+
+                <!-- Show All Trips Button -->
+                <button class="show-all-btn" onclick="showAllTripsOnMap()">
+                    📍 Show All Trips on Map
+                </button>
+            </div>
+
+            <!-- Vehicle Filter -->
+            <div class="filter-section">
+                <div class="filter-title">Vehicle Filter</div>
+                <div class="filter-option selected" onclick="selectVehicle('all')" data-vehicle="all">
+                    <div style="font-weight: 500;">All Vehicles</div>
+                    <div style="font-size: 0.8rem; color: #94a3b8;">Click to highlight all trips</div>
+                </div>
+                <div class="filter-option" onclick="selectVehicle('Lightning 1')" data-vehicle="Lightning 1">
+                    <div style="font-weight: 500;">Lightning 1</div>
+                    <div style="font-size: 0.8rem; color: #94a3b8;">2023 F-150 - Click to highlight</div>
+                </div>
+                <div class="filter-option" onclick="selectVehicle('Lightning 2')" data-vehicle="Lightning 2">
+                    <div style="font-weight: 500;">Lightning 2</div>
+                    <div style="font-size: 0.8rem; color: #94a3b8;">2022 F-150 - Click to highlight</div>
+                </div>
+                <div class="filter-option" onclick="selectVehicle('eTransit Van')" data-vehicle="eTransit Van">
+                    <div style="font-weight: 500;">eTransit Van</div>
+                    <div style="font-size: 0.8rem; color: #94a3b8;">2023 Transit - Click to highlight</div>
+                </div>
+                <div class="filter-option" onclick="selectVehicle('Lightning XLT')" data-vehicle="Lightning XLT">
+                    <div style="font-weight: 500;">Lightning XLT</div>
+                    <div style="font-size: 0.8rem; color: #94a3b8;">2023 F-150 Lightning - Click to highlight</div>
+                </div>
+            </div>
+
+            <!-- Trip Log -->
+            <div class="filter-section">
+                <div class="filter-title">Trip Log</div>
+                <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 1rem;">Click vehicle above to see trips, then click trip to see route</div>
+                <div id="tripList">
+                    <div style="color: #94a3b8; text-align: center; padding: 1rem;">Loading trips...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <div class="content-title">Trip Analytics</div>
+                <div class="trip-count" id="tripCount">1 trip</div>
+            </div>
+            <div class="map-container">
+                <div id="tripMap"></div>
+                <div class="map-loading" id="mapLoading">Loading map...</div>
+                
+                <!-- Trip Details Panel -->
+                <div class="trip-details" id="tripDetails">
+                    <div class="detail-row">
+                        <span class="detail-label">Vehicle:</span>
+                        <span class="detail-value" id="detailVehicle">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Start Time:</span>
+                        <span class="detail-value" id="detailStartTime">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">End Time:</span>
+                        <span class="detail-value" id="detailEndTime">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Distance:</span>
+                        <span class="detail-value" id="detailDistance">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Battery Used:</span>
+                        <span class="detail-value" id="detailBattery">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Data Source:</span>
+                        <span class="detail-value" id="detailSource">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let map;
+        let tripMarkers = [];
+        let tripPaths = [];
+        let selectedTrip = null;
+        let allTrips = [];
+
+        // Sample trip data (Lightning 1 Ford Telematics)
+        const sampleTrip = {
+            id: 'demo-trip-1',
+            vehicleName: 'Lightning 1',
+            vehicleId: '1FT6W1EV3PWG37779',
+            startTime: '2025-09-08T20:30:37Z',
+            endTime: '2025-09-08T20:45:00Z',
+            startLocation: {
+                latitude: 36.177855,
+                longitude: -94.170556,
+                address: 'Brian Clark (Shaver St)',
+                clientName: 'Brian Clark (Shaver St)'
+            },
+            endLocation: {
+                latitude: 36.183144,
+                longitude: -94.169561,
+                address: 'McRay Shop',
+                clientName: 'McRay Shop'
+            },
+            distance: 0.5,
+            batteryStartLevel: 77,
+            batteryEndLevel: 66.5,
+            dataSource: 'Ford Telematics (3-second intervals)',
+            waypoints: [
+                { latitude: 36.177855, longitude: -94.170556 },
+                { latitude: 36.178500, longitude: -94.170200 },
+                { latitude: 36.180000, longitude: -94.169800 },
+                { latitude: 36.182000, longitude: -94.169600 },
+                { latitude: 36.183144, longitude: -94.169561 }
+            ]
+        };
+
+        // Load trip data from API
+        async function loadTripData() {
+            try {
+                console.log('🔄 Loading trip data...');
+                
+                // Get current date for today's data
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Load timeline data for all vehicles
+                const vehicleIds = ['1FT6W1EV3PWG37779', '1FTBW1XK6PKA30591', '1FTVW1EV3NWG07402', '1FTVW1EL3NWG00285'];
+                const vehicleNames = ['Lightning 1', 'eTransit Van', 'Lightning XLT', 'Lightning 2'];
+                
+                allTrips = [];
+                let tripIdCounter = 1;
+                
+                for (let i = 0; i < vehicleIds.length; i++) {
+                    try {
+                        const response = await fetch(`/api/trips/timeline/${vehicleIds[i]}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success && data.timeline && data.timeline.trips) {
+                                // Convert timeline trips to our format
+                                data.timeline.trips.forEach(timelineTrip => {
+                                    allTrips.push({
+                                        id: `trip-${tripIdCounter++}`,
+                                        vehicleId: vehicleIds[i],
+                                        vehicleName: vehicleNames[i],
+                                        startTime: new Date(timelineTrip.startTime),
+                                        endTime: new Date(timelineTrip.endTime),
+                                        startLocation: {
+                                            latitude: timelineTrip.startLocation.latitude,
+                                            longitude: timelineTrip.startLocation.longitude,
+                                            address: timelineTrip.startLocation.address,
+                                            clientName: timelineTrip.startLocation.clientName || timelineTrip.startLocation.address
+                                        },
+                                        endLocation: {
+                                            latitude: timelineTrip.endLocation.latitude,
+                                            longitude: timelineTrip.endLocation.longitude,
+                                            address: timelineTrip.endLocation.address,
+                                            clientName: timelineTrip.endLocation.clientName || timelineTrip.endLocation.address
+                                        },
+                                        route: timelineTrip.route || [],
+                                        distance: timelineTrip.distance,
+                                        duration: timelineTrip.duration,
+                                        batteryUsed: timelineTrip.batteryUsed,
+                                        avgSpeed: timelineTrip.avgSpeed,
+                                        dataSource: 'Ford Telematics (3-second intervals)'
+                                    });
+                                });
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Failed to load timeline for ${vehicleNames[i]}:`, error);
+                    }
+                }
+                
+                console.log(`✅ Loaded ${allTrips.length} trips`);
+                
+                // Update trip list UI
+                updateTripList();
+                
+                // Auto-select first trip if available
+                if (allTrips.length > 0) {
+                    setTimeout(() => {
+                        selectTrip(allTrips[0].id);
+                    }, 500);
+                }
+                
+            } catch (error) {
+                console.error('❌ Failed to load trip data:', error);
+                // Fallback to sample data
+                allTrips = [sampleTrip];
+                updateTripList();
+            }
+        }
+        
+        // Update the trip list UI
+        function updateTripList() {
+            const tripList = document.getElementById('tripList');
+            tripList.innerHTML = '';
+            
+            if (allTrips.length === 0) {
+                tripList.innerHTML = '<div style="color: #94a3b8; text-align: center; padding: 1rem;">No trips found for today</div>';
+                document.getElementById('tripCount').textContent = '0 trips';
+                return;
+            }
+            
+            // Group trips by vehicle for better organization
+            const tripsByVehicle = {};
+            allTrips.forEach(trip => {
+                if (!tripsByVehicle[trip.vehicleName]) {
+                    tripsByVehicle[trip.vehicleName] = [];
+                }
+                tripsByVehicle[trip.vehicleName].push(trip);
+            });
+            
+            // Display trips grouped by vehicle
+            Object.keys(tripsByVehicle).forEach(vehicleName => {
+                const vehicleTrips = tripsByVehicle[vehicleName];
+                
+                vehicleTrips.forEach((trip, index) => {
+                    const tripElement = document.createElement('div');
+                    tripElement.className = 'trip-item';
+                    tripElement.setAttribute('data-vehicle', trip.vehicleName);
+                    tripElement.onclick = () => selectTrip(trip.id, tripElement);
+                    
+                    const startTime = trip.startTime.toLocaleTimeString('en-US', { 
+                        hour: 'numeric', 
+                        minute: '2-digit', 
+                        hour12: true 
+                    });
+                    const endTime = trip.endTime.toLocaleTimeString('en-US', { 
+                        hour: 'numeric', 
+                        minute: '2-digit', 
+                        hour12: true 
+                    });
+                    
+                    tripElement.innerHTML = `
+                        <div class="trip-vehicle">${trip.vehicleName}</div>
+                        <div class="trip-time">Today ${startTime} - ${endTime}</div>
+                        <div class="trip-location">${trip.startLocation.clientName} → ${trip.endLocation.clientName}</div>
+                    `;
+                    
+                    tripList.appendChild(tripElement);
+                });
+            });
+            
+            // Update trip count
+            document.getElementById('tripCount').textContent = `${allTrips.length} trip${allTrips.length !== 1 ? 's' : ''}`;
+        }
+
+        // Initialize
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('tripMap'), {
+                zoom: 13,
+                center: { lat: 36.1627, lng: -86.7816 }, // Nashville
+                styles: [
+                    {
+                        "featureType": "all",
+                        "elementType": "geometry.fill",
+                        "stylers": [{ "color": "#1a1f2e" }]
+                    },
+                    {
+                        "featureType": "water",
+                        "elementType": "geometry",
+                        "stylers": [{ "color": "#0a0e1a" }]
+                    },
+                    {
+                        "featureType": "road",
+                        "elementType": "geometry",
+                        "stylers": [{ "color": "#2a3441" }]
+                    },
+                    {
+                        "featureType": "all",
+                        "elementType": "labels.text.stroke",
+                        "stylers": [{ "visibility": "off" }]
+                    },
+                    {
+                        "featureType": "all",
+                        "elementType": "labels.text.fill",
+                        "stylers": [{ "color": "#94a3b8" }]
+                    },
+                    {
+                        "featureType": "poi",
+                        "elementType": "labels.text.stroke",
+                        "stylers": [{ "visibility": "off" }]
+                    },
+                    {
+                        "featureType": "road",
+                        "elementType": "labels.text.stroke",
+                        "stylers": [{ "visibility": "off" }]
+                    }
+                ]
+            });
+
+            document.getElementById('mapLoading').style.display = 'none';
+            
+            // Load real trip data
+            loadTripData();
+        }
+
+        function selectTrip(tripId, element = null) {
+            // Remove previous selection
+            document.querySelectorAll('.trip-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Add selection to clicked item
+            if (element) {
+                element.closest('.trip-item').classList.add('selected');
+            } else if (event && event.target) {
+                event.target.closest('.trip-item').classList.add('selected');
+            }
+            
+            // Find the trip data
+            selectedTrip = allTrips.find(trip => trip.id === tripId);
+            
+            if (selectedTrip) {
+                showTripOnMap(selectedTrip);
+                showTripDetails(selectedTrip);
+            }
+        }
+
+        function showTripOnMap(trip) {
+            if (!map) return;
+            
+            // Clear existing paths and markers
+            clearMap();
+            
+            // Create start marker
+            if (trip.startLocation) {
+                const startMarker = new google.maps.Marker({
+                    position: {
+                        lat: trip.startLocation.latitude,
+                        lng: trip.startLocation.longitude
+                    },
+                    map: map,
+                    title: `Start: ${trip.startLocation.clientName}`,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 10,
+                        fillColor: '#10b981',
+                        fillOpacity: 1,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 2
+                    }
+                });
+                tripMarkers.push(startMarker);
+            }
+            
+            // Create end marker
+            if (trip.endLocation) {
+                const endMarker = new google.maps.Marker({
+                    position: {
+                        lat: trip.endLocation.latitude,
+                        lng: trip.endLocation.longitude
+                    },
+                    map: map,
+                    title: `End: ${trip.endLocation.clientName}`,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 10,
+                        fillColor: '#ef4444',
+                        fillOpacity: 1,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 2
+                    }
+                });
+                tripMarkers.push(endMarker);
+            }
+            
+            // Draw route if waypoints exist
+            if (trip.waypoints && trip.waypoints.length > 0) {
+                const routePath = new google.maps.Polyline({
+                    path: trip.waypoints.map(wp => ({
+                        lat: wp.latitude,
+                        lng: wp.longitude
+                    })),
+                    geodesic: true,
+                    strokeColor: '#10b981',
+                    strokeOpacity: 1.0,
+                    strokeWeight: 4
+                });
+                
+                routePath.setMap(map);
+                tripPaths.push(routePath);
+            }
+            
+            // Center map on trip
+            if (trip.startLocation) {
+                map.setCenter({
+                    lat: trip.startLocation.latitude,
+                    lng: trip.startLocation.longitude
+                });
+                map.setZoom(15);
+            }
+        }
+
+        function showTripDetails(trip) {
+            document.getElementById('detailVehicle').textContent = trip.vehicleName;
+            document.getElementById('detailStartTime').textContent = new Date(trip.startTime).toLocaleString();
+            document.getElementById('detailEndTime').textContent = trip.endTime ? new Date(trip.endTime).toLocaleString() : 'In Progress';
+            document.getElementById('detailDistance').textContent = trip.distance ? `${trip.distance} miles` : 'N/A';
+            document.getElementById('detailBattery').textContent = 
+                trip.batteryStartLevel && trip.batteryEndLevel ? 
+                `${(trip.batteryStartLevel - trip.batteryEndLevel).toFixed(1)}%` : 'N/A';
+            document.getElementById('detailSource').textContent = trip.dataSource || 'Unknown';
+            
+            document.getElementById('tripDetails').classList.add('visible');
+        }
+
+        function clearMap() {
+            tripMarkers.forEach(marker => marker.setMap(null));
+            tripPaths.forEach(path => path.setMap(null));
+            tripMarkers = [];
+            tripPaths = [];
+        }
+
+        function selectVehicle(vehicle) {
+            // Remove previous selection
+            document.querySelectorAll('.filter-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Add selection to clicked option
+            event.target.closest('.filter-option').classList.add('selected');
+            
+            console.log('Filtering by vehicle:', vehicle);
+            // TODO: Implement filtering logic
+        }
+
+        function showAllTripsOnMap() {
+            console.log('Showing all trips on map');
+            // TODO: Implement show all trips logic
+        }
+
+        // Auto-load when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Trip Analytics page loaded');
+        });
+    </script>
+
+    <!-- Load Google Maps API dynamically like fleet-advanced -->
+    <script>
+        // Load Google Maps API dynamically with proper key handling
+        async function loadGoogleMaps() {
+            try {
+                // Try to get API key from config first
+                const configResponse = await fetch('/api/config/google-maps-key');
+                let apiKey = '';
+                
+                if (configResponse.ok) {
+                    const config = await configResponse.json();
+                    apiKey = config.apiKey;
+                    console.log('✅ Using Google Maps API key from config');
+                } else {
+                    console.warn('⚠️ No Google Maps API key configured, using fallback without key');
+                }
+                
+                const script = document.createElement('script');
+                script.async = true;
+                script.defer = true;
+                
+                if (apiKey) {
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry&loading=async&callback=initMap`;
+                } else {
+                    script.src = 'https://maps.googleapis.com/maps/api/js?libraries=geometry&loading=async&callback=initMap';
+                }
+                
+                script.onerror = function() {
+                    console.error('❌ Failed to load Google Maps API');
+                    document.getElementById('tripMap').innerHTML = '<div style="padding: 2rem; text-align: center; color: #94a3b8;">Maps failed to load. Please check your connection.</div>';
+                };
+                
+                document.head.appendChild(script);
+                
+            } catch (error) {
+                console.error('❌ Error loading Google Maps:', error);
+                document.getElementById('tripMap').innerHTML = '<div style="padding: 2rem; text-align: center; color: #94a3b8;">Maps configuration error.</div>';
+            }
+        }
+        
+        // Load maps when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadGoogleMaps);
+        } else {
+            loadGoogleMaps();
+        }
+    </script>
+</body>
+</html>

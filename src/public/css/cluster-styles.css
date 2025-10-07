@@ -1,0 +1,139 @@
+/* Custom Vehicle Cluster Styles for SparkLawn - Match vehicle pin design */
+
+.marker-cluster-small {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Vehicle-style cluster pin */
+.custom-cluster-marker .vehicle-cluster-pin {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    background-color: #22c55e;
+    border: 3px solid white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 1000;
+}
+
+.custom-cluster-marker .vehicle-cluster-pulse {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: rgba(34, 197, 94, 0.3);
+    animation: pulse 2s infinite;
+    z-index: -1;
+}
+
+.custom-cluster-marker .vehicle-cluster-tooltip {
+    position: absolute;
+    top: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    z-index: 2000;
+}
+
+.custom-cluster-marker:hover .vehicle-cluster-tooltip {
+    opacity: 1;
+}
+
+.marker-cluster-small div {
+    background-color: rgba(108, 146, 115, 1) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    border-radius: 50% !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 2px solid white !important;
+}
+
+.marker-cluster-medium {
+    background-color: rgba(85, 125, 90, 0.9) !important; /* Darker SparkLawn green */
+    border: 3px solid rgba(255, 255, 255, 0.8) !important;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+.marker-cluster-medium div {
+    background-color: rgba(85, 125, 90, 1) !important;
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    border-radius: 50% !important;
+    width: 50px !important;
+    height: 50px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 3px solid white !important;
+}
+
+.marker-cluster-large {
+    background-color: rgba(65, 105, 70, 0.9) !important; /* Darkest SparkLawn green */
+    border: 3px solid rgba(255, 255, 255, 0.8) !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25) !important;
+}
+
+.marker-cluster-large div {
+    background-color: rgba(65, 105, 70, 1) !important;
+    color: white !important;
+    font-weight: 800 !important;
+    font-size: 18px !important;
+    border-radius: 50% !important;
+    width: 60px !important;
+    height: 60px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 3px solid white !important;
+}
+
+/* Hover effects for clusters */
+.marker-cluster:hover {
+    transform: scale(1.1) !important;
+    transition: transform 0.2s ease !important;
+}
+
+/* Animation for cluster appearance */
+.marker-cluster {
+    transition: all 0.3s ease !important;
+}
+
+/* Spiderfy line colors (when clusters expand) */
+.marker-cluster-spiderfy-link {
+    stroke: rgba(108, 146, 115, 0.8) !important;
+    stroke-width: 2px !important;
+}
+
+/* Custom styling for individual vehicle markers in clusters */
+.vehicle-pin {
+    position: relative;
+    z-index: 1000;
+}
+
+/* Ensure vehicle markers are visible when spiderfied */
+.leaflet-marker-icon.marker-cluster-spiderfy {
+    z-index: 1001 !important;
+}

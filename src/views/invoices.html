@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subcontractor Invoices - SparkLawn</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Navigation Bar - Matching daily-report-preview */
+        .navbar {
+            background: linear-gradient(135deg, #1a1f2e 0%, #2a3441 100%);
+            border-bottom: 2px solid #10b981;
+            padding: 0 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+
+        .nav-brand {
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-brand span {
+            color: #10b981;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 5px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: #d1d5db;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .nav-links a.active {
+            background: #10b981;
+            color: white;
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                position: fixed;
+                top: 60px;
+                right: -100%;
+                width: 250px;
+                background: #1a1f2e;
+                flex-direction: column;
+                padding: 20px;
+                transition: right 0.3s;
+                height: calc(100vh - 60px);
+                border-left: 2px solid #10b981;
+            }
+
+            .nav-links.active {
+                right: 0;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        /* Page Header with Gradient */
+        .page-header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-header p {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        /* Stats Summary Grid */
+        .summary-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .summary-stat {
+            background: rgba(255,255,255,0.2);
+            padding: 18px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .summary-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: white;
+        }
+
+        .summary-stat-label {
+            font-size: 11px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .summary-stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e5e7eb;
+        }
+
+        .chart-card h3 {
+            color: #1f2937;
+            font-size: 16px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        @media (max-width: 1024px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Action Cards (Upload/Extract) */
+        .action-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e5e7eb;
+        }
+
+        .action-card h2 {
+            color: #1f2937;
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-card p {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .upload-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .upload-form input[type="file"] {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .upload-form select {
+            padding: 10px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            color: #1f2937;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6366f1;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4f46e5;
+        }
+
+        /* Filters */
+        .filters-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e5e7eb;
+        }
+
+        .filters-card h3 {
+            color: #1f2937;
+            font-size: 16px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group select, .filter-group input {
+            padding: 10px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            color: #1f2937;
+        }
+
+        /* Contractor Sections - Matching vehicle sections */
+        .contractor-section {
+            margin-bottom: 30px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .contractor-header {
+            background: #f9fafb;
+            border-bottom: 2px solid #10b981;
+            padding: 18px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .contractor-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .contractor-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .contractor-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .contractor-stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+            letter-spacing: 0.5px;
+        }
+
+        .contractor-stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .contractor-stat-value.pending {
+            color: #f59e0b;
+        }
+
+        .contractor-stat-value.paid {
+            color: #10b981;
+        }
+
+        /* Invoice Table */
+        .invoices-table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            padding: 12px 18px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 14px 18px;
+            text-align: left;
+            font-size: 13px;
+            color: #1f2937;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        tbody tr:hover {
+            background: #f0f9ff;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .status-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge.paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.overdue {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .action-btn.mark-paid {
+            background: #10b981;
+            color: white;
+        }
+
+        .action-btn.mark-paid:hover {
+            background: #059669;
+        }
+
+        .action-btn.delete {
+            background: transparent;
+            color: #ef4444;
+            border: 1px solid #fecaca;
+        }
+
+        .action-btn.delete:hover {
+            background: #fee2e2;
+        }
+
+        .paid-indicator {
+            color: #10b981;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 60px 40px;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            color: #9ca3af;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        /* Status Messages */
+        .status-message {
+            margin-top: 12px;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #d1fae5;
+            color: #065f46;
+            display: block;
+        }
+
+        .status-message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            display: block;
+        }
+
+        .status-message.info {
+            background: #dbeafe;
+            color: #1e40af;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">
+                <span>🌿</span> SparkLawn
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <a href="/">Dashboard</a>
+                <a href="/fleet-advanced">Fleet</a>
+                <a href="/daily-report-preview">Daily Report</a>
+                <a href="/invoices" class="active">Invoices</a>
+                <a href="/client-management">Clients</a>
+            </ul>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>📋 Subcontractor Invoices</h1>
+            <p>Track and manage invoices from all contractors</p>
+        </div>
+
+        <!-- Critical Period Stats -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px;">
+            <!-- Invoiced Card -->
+            <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 24px;">📄</span>
+                    </div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.9); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; font-family: -apple-system, system-ui, sans-serif;">Invoiced</div>
+                </div>
+                <div id="totalInvoiced" style="font-size: 32px; font-weight: 700; color: white; font-family: -apple-system, system-ui, sans-serif; margin-bottom: 4px;">$0.00</div>
+                <div id="totalInvoicedLabel" style="font-size: 11px; color: rgba(255,255,255,0.8); font-family: -apple-system, system-ui, sans-serif;">All time</div>
+            </div>
+
+            <!-- Paid Card -->
+            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 24px;">✅</span>
+                    </div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.9); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; font-family: -apple-system, system-ui, sans-serif;">Paid</div>
+                </div>
+                <div id="totalPaid" style="font-size: 32px; font-weight: 700; color: white; font-family: -apple-system, system-ui, sans-serif; margin-bottom: 4px;">$0.00</div>
+                <div id="totalPaidLabel" style="font-size: 11px; color: rgba(255,255,255,0.8); font-family: -apple-system, system-ui, sans-serif;">All time</div>
+            </div>
+
+            <!-- Balance Card -->
+            <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 24px;">💰</span>
+                    </div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.9); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; font-family: -apple-system, system-ui, sans-serif;">Balance</div>
+                </div>
+                <div id="totalBalance" style="font-size: 32px; font-weight: 700; color: white; font-family: -apple-system, system-ui, sans-serif; margin-bottom: 4px;">$0.00</div>
+                <div id="totalBalanceLabel" style="font-size: 11px; color: rgba(255,255,255,0.8); font-family: -apple-system, system-ui, sans-serif;">Outstanding</div>
+            </div>
+        </div>
+
+        <!-- Period Comparison -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+            <!-- Last Month -->
+            <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="font-size: 14px; font-weight: 600; color: #111827; margin: 0; font-family: -apple-system, system-ui, sans-serif;">Last Month</h3>
+                    <span id="lastMonthLabel" style="font-size: 12px; color: #6b7280; font-family: -apple-system, system-ui, sans-serif;"></span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                    <div>
+                        <div style="font-size: 10px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; font-family: -apple-system, system-ui, sans-serif;">Invoiced</div>
+                        <div id="lastMonthInvoiced" style="font-size: 22px; font-weight: 700; color: #111827; font-family: -apple-system, system-ui, sans-serif;">$0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 10px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; font-family: -apple-system, system-ui, sans-serif;">Paid</div>
+                        <div id="lastMonthPaid" style="font-size: 22px; font-weight: 700; color: #111827; font-family: -apple-system, system-ui, sans-serif;">$0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 10px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; font-family: -apple-system, system-ui, sans-serif;">Balance</div>
+                        <div id="lastMonthBalance" style="font-size: 22px; font-weight: 700; color: #111827; font-family: -apple-system, system-ui, sans-serif;">$0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Month to Date -->
+            <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="font-size: 14px; font-weight: 600; color: #111827; margin: 0; font-family: -apple-system, system-ui, sans-serif;">Month to Date</h3>
+                    <span id="mtdLabel" style="font-size: 12px; color: #6b7280; font-family: -apple-system, system-ui, sans-serif;"></span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                    <div>
+                        <div style="font-size: 10px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; font-family: -apple-system, system-ui, sans-serif;">Invoiced</div>
+                        <div id="mtdInvoiced" style="font-size: 22px; font-weight: 700; color: #111827; font-family: -apple-system, system-ui, sans-serif;">$0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 10px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; font-family: -apple-system, system-ui, sans-serif;">Paid</div>
+                        <div id="mtdPaid" style="font-size: 22px; font-weight: 700; color: #111827; font-family: -apple-system, system-ui, sans-serif;">$0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 10px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; font-family: -apple-system, system-ui, sans-serif;">Balance</div>
+                        <div id="mtdBalance" style="font-size: 22px; font-weight: 700; color: #111827; font-family: -apple-system, system-ui, sans-serif;">$0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contractor Breakdown Chart -->
+        <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px;">
+            <h3 style="font-size: 14px; font-weight: 600; color: #111827; margin: 0 0 20px 0; font-family: -apple-system, system-ui, sans-serif;">By Contractor</h3>
+            <div id="contractorStatsContainer">
+                <!-- Contractor chart will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="action-card">
+            <h2>📤 Upload New Invoice</h2>
+            <form class="upload-form" id="uploadForm">
+                <input type="file" id="invoiceFile" accept=".pdf" required>
+                <select id="contractorSelect">
+                    <option value="">Auto-detect contractor</option>
+                    <option value="travis">Travis' Green Lawns</option>
+                    <option value="irrigation">Irrigation Solutions</option>
+                </select>
+                <button type="submit" class="btn btn-secondary">Upload & Process</button>
+            </form>
+            <div id="uploadStatus" class="status-message"></div>
+        </div>
+
+        <!-- Gmail Extraction Section -->
+        <div class="action-card">
+            <h2>📧 Extract from Gmail</h2>
+            <p>Extract new invoices and payment receipts from the last 24 hours</p>
+            <div class="upload-form">
+                <button type="button" onclick="extractFromGmail()" class="btn btn-primary">📧 Extract Last 24 Hours</button>
+                <span id="gmailStatus" style="margin-left: 10px; font-size: 13px; font-weight: 600;"></span>
+            </div>
+            <div id="extractStatus" class="status-message"></div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-card">
+            <h3>🔍 Filters</h3>
+            <div class="filter-group">
+                <select id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="paid">Paid</option>
+                    <option value="overdue">Overdue</option>
+                </select>
+                <select id="contractorFilter">
+                    <option value="">All Contractors</option>
+                    <option value="Travis' Green Lawns">Travis' Green Lawns</option>
+                    <option value="Irrigation Solutions Inc">Irrigation Solutions</option>
+                    <option value="Sod Partners LLC">Sod Partners</option>
+                    <option value="Titan Lawn & Landscape">Titan Lawn</option>
+                </select>
+                <input type="month" id="monthFilter" placeholder="Filter by month">
+                <button onclick="loadInvoices()" class="btn btn-primary">Apply Filters</button>
+            </div>
+        </div>
+
+        <!-- Invoices List -->
+        <div id="invoicesContainer">
+            <div class="loading">Loading invoices...</div>
+        </div>
+    </div>
+
+    <script>
+        let allInvoices = [];
+
+        // Mobile menu toggle
+        document.getElementById('hamburger')?.addEventListener('click', () => {
+            document.getElementById('navLinks').classList.toggle('active');
+        });
+
+        // Load stats and invoices on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPeriodStats();
+            loadInvoices();
+
+            // Add event listeners to filters for auto-filtering
+            document.getElementById('statusFilter').addEventListener('change', loadInvoices);
+            document.getElementById('contractorFilter').addEventListener('change', loadInvoices);
+            document.getElementById('monthFilter').addEventListener('change', loadInvoices);
+        });
+
+        // Upload form handler
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('invoiceFile');
+            const contractorSelect = document.getElementById('contractorSelect');
+            const statusEl = document.getElementById('uploadStatus');
+
+            if (!fileInput.files[0]) {
+                statusEl.className = 'status-message error';
+                statusEl.textContent = '❌ Please select a file';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('invoice', fileInput.files[0]);
+            if (contractorSelect.value) {
+                formData.append('contractor', contractorSelect.value);
+            }
+
+            statusEl.className = 'status-message info';
+            statusEl.textContent = '⏳ Processing invoice...';
+
+            try {
+                const response = await fetch('/api/invoices/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    statusEl.className = 'status-message success';
+                    statusEl.textContent = `✅ Invoice uploaded successfully! ${data.propertyMatch.matched ? '(Property matched: ' + data.invoice.matchedClientName + ')' : '(No property match)'}`;
+
+                    // Reset form
+                    fileInput.value = '';
+                    contractorSelect.value = '';
+
+                    // Reload data
+                    loadStats();
+                    loadInvoices();
+                } else {
+                    statusEl.className = 'status-message error';
+                    statusEl.textContent = '❌ Error: ' + data.error;
+                }
+            } catch (error) {
+                statusEl.className = 'status-message error';
+                statusEl.textContent = '❌ Upload failed: ' + error.message;
+            }
+        });
+
+        // Load period statistics (Last Month and MTD)
+        async function loadPeriodStats() {
+            try {
+                // Fetch all invoices and payments
+                const [invoicesResponse, paymentsResponse] = await Promise.all([
+                    fetch('/api/invoices?limit=10000'),
+                    fetch('/api/invoices/payments?limit=10000')
+                ]);
+
+                const invoicesData = await invoicesResponse.json();
+                const paymentsData = await paymentsResponse.json();
+
+                if (invoicesData.success && paymentsData.success) {
+                    const now = new Date();
+                    const currentYear = now.getFullYear();
+                    const currentMonth = now.getMonth();
+
+                    // Last month dates
+                    const lastMonthStart = new Date(currentYear, currentMonth - 1, 1);
+                    const lastMonthEnd = new Date(currentYear, currentMonth, 0, 23, 59, 59);
+
+                    // Month to date
+                    const mtdStart = new Date(currentYear, currentMonth, 1);
+                    const mtdEnd = now;
+
+                    // Calculate Last Month
+                    const lastMonthInvoices = invoicesData.invoices.filter(inv => {
+                        const date = new Date(inv.invoiceDate);
+                        return date >= lastMonthStart && date <= lastMonthEnd;
+                    });
+                    const lastMonthPayments = paymentsData.payments.filter(pay => {
+                        const date = new Date(pay.paymentDate);
+                        return date >= lastMonthStart && date <= lastMonthEnd;
+                    });
+
+                    const lastMonthInvoicedTotal = lastMonthInvoices.reduce((sum, inv) => sum + inv.amount, 0);
+                    const lastMonthPaidTotal = lastMonthPayments.reduce((sum, pay) => sum + pay.amount, 0);
+                    const lastMonthBalance = lastMonthInvoicedTotal - lastMonthPaidTotal;
+
+                    // Calculate MTD
+                    const mtdInvoices = invoicesData.invoices.filter(inv => {
+                        const date = new Date(inv.invoiceDate);
+                        return date >= mtdStart && date <= mtdEnd;
+                    });
+                    const mtdPayments = paymentsData.payments.filter(pay => {
+                        const date = new Date(pay.paymentDate);
+                        return date >= mtdStart && date <= mtdEnd;
+                    });
+
+                    const mtdInvoicedTotal = mtdInvoices.reduce((sum, inv) => sum + inv.amount, 0);
+                    const mtdPaidTotal = mtdPayments.reduce((sum, pay) => sum + pay.amount, 0);
+                    const mtdBalance = mtdInvoicedTotal - mtdPaidTotal;
+
+                    // Update UI
+                    document.getElementById('lastMonthLabel').textContent = lastMonthStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                    document.getElementById('lastMonthInvoiced').textContent = '$' + lastMonthInvoicedTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('lastMonthPaid').textContent = '$' + lastMonthPaidTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('lastMonthBalance').textContent = '$' + lastMonthBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+                    document.getElementById('mtdLabel').textContent = mtdStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) + ' (MTD)';
+                    document.getElementById('mtdInvoiced').textContent = '$' + mtdInvoicedTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('mtdPaid').textContent = '$' + mtdPaidTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('mtdBalance').textContent = '$' + mtdBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+                    // Load contractor breakdown
+                    loadContractorBreakdown(invoicesData.invoices, paymentsData.payments);
+                }
+            } catch (error) {
+                console.error('Error loading period stats:', error);
+            }
+        }
+
+        // Load contractor breakdown with stacked bar chart
+        function loadContractorBreakdown(invoices, payments) {
+            const contractors = {};
+
+            // Aggregate by contractor
+            invoices.forEach(inv => {
+                if (!contractors[inv.contractor]) {
+                    contractors[inv.contractor] = { invoiced: 0, paid: 0, count: 0 };
+                }
+                contractors[inv.contractor].invoiced += inv.amount;
+                contractors[inv.contractor].count++;
+            });
+
+            payments.forEach(pay => {
+                if (!contractors[pay.contractor]) {
+                    contractors[pay.contractor] = { invoiced: 0, paid: 0, count: 0 };
+                }
+                contractors[pay.contractor].paid += pay.amount;
+            });
+
+            // Update all-time totals at top
+            const totalInvoiced = Object.values(contractors).reduce((sum, c) => sum + c.invoiced, 0);
+            const totalPaid = Object.values(contractors).reduce((sum, c) => sum + c.paid, 0);
+            const totalBalance = totalInvoiced - totalPaid;
+
+            document.getElementById('totalInvoiced').textContent = '$' + (totalInvoiced / 1000).toFixed(1) + 'k';
+            document.getElementById('totalPaid').textContent = '$' + (totalPaid / 1000).toFixed(1) + 'k';
+            document.getElementById('totalBalance').textContent = '$' + (totalBalance / 1000).toFixed(1) + 'k';
+
+            // Create stacked bar chart
+            const container = document.getElementById('contractorStatsContainer');
+            container.innerHTML = '';
+
+            const contractorColors = {
+                "Travis' Green Lawns": '#10b981',
+                'Irrigation Solutions Inc': '#3b82f6',
+                'Sod Partners LLC': '#f59e0b',
+                'Titan Lawn & Landscape': '#8b5cf6'
+            };
+
+            // Find max amount for scaling
+            const maxAmount = Math.max(...Object.values(contractors).map(c => c.invoiced));
+
+            // Sort by invoiced amount
+            const sorted = Object.entries(contractors).sort((a, b) => b[1].invoiced - a[1].invoiced);
+
+            sorted.forEach(([name, data]) => {
+                const color = contractorColors[name] || '#6b7280';
+                const invoicedPercent = maxAmount > 0 ? (data.invoiced / maxAmount) * 100 : 0;
+                const paidPercent = maxAmount > 0 ? (data.paid / maxAmount) * 100 : 0;
+                const balance = data.invoiced - data.paid;
+
+                const row = document.createElement('div');
+                row.style.cssText = 'margin-bottom: 20px;';
+
+                row.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="font-size: 13px; font-weight: 600; color: #111827; font-family: -apple-system, system-ui, sans-serif;">${name}</div>
+                        <div style="font-size: 12px; color: #6b7280; font-family: -apple-system, system-ui, sans-serif;">
+                            Balance: <span style="font-weight: 600; color: #111827;">$${(balance / 1000).toFixed(1)}k</span>
+                        </div>
+                    </div>
+                    <div style="position: relative; height: 40px; background: #f3f4f6; border-radius: 6px; overflow: hidden;">
+                        <div style="position: absolute; left: 0; top: 0; height: 100%; background: ${color}; width: ${invoicedPercent}%; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; transition: width 0.3s ease;">
+                            <span style="font-size: 11px; font-weight: 600; color: white; font-family: -apple-system, system-ui, sans-serif;">$${(data.invoiced / 1000).toFixed(1)}k</span>
+                        </div>
+                        <div style="position: absolute; left: 0; top: 0; height: 100%; background: linear-gradient(90deg, rgba(16, 185, 129, 0.9) 0%, rgba(16, 185, 129, 0.95) 100%); width: ${paidPercent}%; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; transition: width 0.3s ease;">
+                            <span style="font-size: 11px; font-weight: 600; color: white; font-family: -apple-system, system-ui, sans-serif;">$${(data.paid / 1000).toFixed(1)}k</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 16px; margin-top: 6px; font-size: 11px; color: #6b7280; font-family: -apple-system, system-ui, sans-serif;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 12px; height: 12px; background: ${color}; border-radius: 2px;"></div>
+                            <span>Invoiced</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 12px; height: 12px; background: #10b981; border-radius: 2px;"></div>
+                            <span>Paid</span>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(row);
+            });
+        }
+
+        // Load invoices and payments
+        async function loadInvoices() {
+            console.log('🔍 loadInvoices called');
+            const statusFilter = document.getElementById('statusFilter').value;
+            const contractorFilter = document.getElementById('contractorFilter').value;
+            const monthFilter = document.getElementById('monthFilter').value;
+
+            console.log('📋 Filters:', { statusFilter, contractorFilter, monthFilter });
+
+            let invoicesUrl = '/api/invoices?limit=500';
+            let paymentsUrl = '/api/invoices/payments';
+
+            if (statusFilter) invoicesUrl += `&status=${statusFilter}`;
+            if (contractorFilter) {
+                invoicesUrl += `&contractor=${encodeURIComponent(contractorFilter)}`;
+                paymentsUrl += `?contractor=${encodeURIComponent(contractorFilter)}`;
+            }
+            if (monthFilter) {
+                const [year, month] = monthFilter.split('-');
+                const startDate = new Date(year, month - 1, 1);
+                const endDate = new Date(year, month, 0);
+                invoicesUrl += `&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`;
+                const separator = contractorFilter ? '&' : '?';
+                paymentsUrl += `${separator}startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`;
+            }
+
+            console.log('🌐 Fetching invoices URL:', invoicesUrl);
+            console.log('🌐 Fetching payments URL:', paymentsUrl);
+
+            try {
+                // Fetch both invoices and payments in parallel
+                const [invoicesResponse, paymentsResponse] = await Promise.all([
+                    fetch(invoicesUrl),
+                    fetch(paymentsUrl)
+                ]);
+
+                const invoicesData = await invoicesResponse.json();
+                const paymentsData = await paymentsResponse.json();
+
+                console.log('✅ Received data:', invoicesData.count, 'invoices,', paymentsData.count, 'payments');
+
+                if (invoicesData.success) {
+                    // Mark invoices with type
+                    const invoices = invoicesData.invoices.map(inv => ({ ...inv, type: 'invoice' }));
+
+                    // Mark payments with type and normalize structure
+                    const payments = paymentsData.payments.map(pay => ({
+                        ...pay,
+                        type: 'payment',
+                        invoiceDate: pay.paymentDate,
+                        invoiceNumber: `Receipt ${pay._id.slice(-6)}`,
+                        pdfUrl: pay.receiptUrl,
+                        propertyName: 'Payment Receipt',
+                        amount: -pay.amount  // Negative to show as credit
+                    }));
+
+                    // Combine and store
+                    allInvoices = [...invoices, ...payments];
+                    displayInvoices(allInvoices);
+                }
+            } catch (error) {
+                console.error('Error loading invoices:', error);
+                document.getElementById('invoicesContainer').innerHTML = '<div class="loading">Error loading invoices</div>';
+            }
+        }
+
+        // Display invoices in unified feed
+        function displayInvoices(invoices) {
+            const container = document.getElementById('invoicesContainer');
+
+            if (invoices.length === 0) {
+                container.innerHTML = `
+                    <div class="contractor-section">
+                        <div class="empty-state">
+                            <p>No invoices found</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort by date (newest first)
+            invoices.sort((a, b) => new Date(b.invoiceDate) - new Date(a.invoiceDate));
+
+            let html = `
+                <div class="contractor-section">
+                    <div class="contractor-header">
+                        <span class="contractor-name">
+                            📋 All Invoices
+                        </span>
+                        <div class="contractor-stats">
+                            <div class="contractor-stat">
+                                <div class="contractor-stat-label">Total Invoices</div>
+                                <div class="contractor-stat-value">${invoices.length}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="invoices-table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Contractor</th>
+                                    <th>Invoice #</th>
+                                    <th>Date</th>
+                                    <th>Property</th>
+                                    <th>Client Match</th>
+                                    <th>Service</th>
+                                    <th>Amount</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+            invoices.forEach(invoice => {
+                const isPayment = invoice.type === 'payment';
+
+                const typeBadge = isPayment ?
+                    `<span style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block;">💰 Receipt</span>` :
+                    `<span style="background: #6366f1; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block;">📄 Invoice</span>`;
+
+                const clientMatch = invoice.matchedClientName ?
+                    `<span style="color: #10b981; font-weight: 600;">${invoice.matchedClientName}</span>` :
+                    `<span style="color: #9ca3af;">No match</span>`;
+
+                const contractorBadge = invoice.contractor === "Travis' Green Lawns" ?
+                    `<span style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block;">🌿 Travis</span>` :
+                    `<span style="background: #3b82f6; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block;">💧 Irrigation</span>`;
+
+                const amountColor = isPayment ? '#10b981' : '#1f2937';
+                const amountDisplay = isPayment ?
+                    `($${Math.abs(invoice.amount).toFixed(2)})` :
+                    `$${invoice.amount.toFixed(2)}`;
+
+                html += `
+                    <tr style="${isPayment ? 'background-color: #f0fdf4;' : ''}">
+                        <td>${typeBadge}</td>
+                        <td>${contractorBadge}</td>
+                        <td><a href="${invoice.pdfUrl}" target="_blank" style="color: #10b981; font-weight: 600; text-decoration: none;">${invoice.invoiceNumber}</a></td>
+                        <td>${new Date(invoice.invoiceDate).toLocaleDateString()}</td>
+                        <td style="font-weight: 500;">${invoice.propertyName || invoice.propertyAddress || 'N/A'}</td>
+                        <td>${clientMatch}</td>
+                        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${invoice.serviceDescription || invoice.notes || 'N/A'}</td>
+                        <td style="font-weight: 600; color: ${amountColor};">${amountDisplay}</td>
+                        <td>
+                            <button class="action-btn delete" onclick="deleteInvoice('${invoice._id}')" style="background: #ef4444; padding: 6px 12px; border-radius: 4px; border: none; color: white; cursor: pointer; font-size: 12px;">🗑</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // Mark invoice as paid
+        async function markAsPaid(invoiceId) {
+            if (!confirm('Mark this invoice as paid?')) return;
+
+            try {
+                const response = await fetch(`/api/invoices/${invoiceId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'paid', paidDate: new Date().toISOString() })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    loadStats();
+                    loadInvoices();
+                }
+            } catch (error) {
+                alert('Error updating invoice: ' + error.message);
+            }
+        }
+
+        // Delete invoice
+        async function deleteInvoice(invoiceId) {
+            if (!confirm('Are you sure you want to delete this invoice?')) return;
+
+            try {
+                const response = await fetch(`/api/invoices/${invoiceId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    loadStats();
+                    loadInvoices();
+                }
+            } catch (error) {
+                alert('Error deleting invoice: ' + error.message);
+            }
+        }
+
+        // Check Gmail status on page load
+        async function checkGmailStatus() {
+            try {
+                const response = await fetch('/api/invoices/gmail/status');
+                const data = await response.json();
+
+                const statusEl = document.getElementById('gmailStatus');
+                if (data.authorized) {
+                    statusEl.textContent = '✅ Connected';
+                    statusEl.style.color = '#10b981';
+                } else {
+                    statusEl.textContent = '⚠️ Not Connected';
+                    statusEl.style.color = '#f59e0b';
+                }
+            } catch (error) {
+                console.error('Error checking Gmail status:', error);
+            }
+        }
+
+        // Extract invoices from Gmail
+        async function extractFromGmail() {
+            const extractStatusEl = document.getElementById('extractStatus');
+            const gmailStatusEl = document.getElementById('gmailStatus');
+
+            // Check if authorized first
+            try {
+                const statusResponse = await fetch('/api/invoices/gmail/status');
+                const statusData = await statusResponse.json();
+
+                if (!statusData.authorized) {
+                    extractStatusEl.className = 'status-message error';
+                    extractStatusEl.textContent = '⚠️ Please authorize Gmail access first';
+
+                    if (confirm('Gmail access not authorized. Click OK to authorize now (opens in new window).')) {
+                        window.open('/gmail-auth/authorize', 'Gmail Authorization', 'width=600,height=700');
+                        extractStatusEl.className = 'status-message info';
+                        extractStatusEl.textContent = '⏳ Waiting for authorization... Please complete the process in the popup window, then click "Extract" again.';
+                    }
+                    return;
+                }
+
+                // Calculate last 24 hours
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() - 1);
+
+                // Start extraction
+                extractStatusEl.className = 'status-message info';
+                extractStatusEl.textContent = '⏳ Extracting invoices from last 24 hours...';
+
+                const response = await fetch('/api/invoices/gmail/extract', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        startDate: startDate.toISOString(),
+                        endDate: endDate.toISOString()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    extractStatusEl.className = 'status-message success';
+                    extractStatusEl.textContent = `✅ Extracted ${data.invoicesExtracted} invoices and ${data.paymentsExtracted} payment receipts! Total in system: ${data.stats.total}`;
+
+                    // Reload data
+                    loadStats();
+                    loadInvoices();
+                } else {
+                    extractStatusEl.className = 'status-message error';
+                    extractStatusEl.textContent = '❌ Error: ' + data.error;
+                }
+
+            } catch (error) {
+                extractStatusEl.className = 'status-message error';
+                extractStatusEl.textContent = '❌ Extraction failed: ' + error.message;
+            }
+        }
+
+        // Check Gmail status when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            checkGmailStatus();
+        });
+    </script>
+</body>
+</html>

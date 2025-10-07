@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: sparklawn-vehicle-dashboard
+    name: sparklawn-fleet-dashboard
     runtime: node
     plan: free
     buildCommand: npm install && npm run build
@@ -13,11 +13,19 @@ services:
         value: 10000
       - key: MONGODB_URI
         sync: false
-      - key: SMARTCAR_CLIENT_ID
+      - key: FORD_TELEMATICS_CLIENT_ID
         sync: false
-      - key: SMARTCAR_CLIENT_SECRET
+      - key: FORD_TELEMATICS_CLIENT_SECRET
         sync: false
-      - key: SMARTCAR_ACCESS_TOKEN
+      - key: GOOGLE_MAPS_API_KEY
         sync: false
-      - key: SMARTCAR_REFRESH_TOKEN
+      - key: JOBBER_ACCESS_TOKEN
         sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        value: https://fleet.sparklawnnwa.com/auth/google/callback
+      - key: SESSION_SECRET
+        generateValue: true

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { tripHistoryService } from '../services/tripHistoryService';
+import { tripTimelineService } from '../services/tripTimelineService';
 
 const router = Router();
 
@@ -114,6 +115,131 @@ router.get('/stats/fleet/overview', async (req, res) => {
         console.error('Error fetching fleet stats:', error);
         res.status(500).json({
             error: 'Failed to fetch fleet statistics',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
+// Get today's detailed timeline for a specific vehicle (or specific date if provided)
+router.get('/timeline/:vehicleId', async (req, res) => {
+    try {
+        const { vehicleId } = req.params;
+        const { date } = req.query;
+
+        let timeline;
+
+        if (date && typeof date === 'string') {
+            // If date parameter provided (YYYY-MM-DD), get timeline for that specific day
+            const requestedDate = new Date(date + 'T00:00:00');
+            const startOfDay = new Date(requestedDate);
+            startOfDay.setHours(0, 0, 0, 0);
+
+            const endOfDay = new Date(requestedDate);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            timeline = await tripTimelineService.getTimelineForPeriod(vehicleId, startOfDay, endOfDay);
+        } else {
+            // Default: get today's timeline
+            timeline = await tripTimelineService.getTodaysTimeline(vehicleId);
+        }
+
+        res.json({
+            success: true,
+            timeline,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error fetching vehicle timeline:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch vehicle timeline',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
+// Get timeline for specific date range
+router.get('/timeline/:vehicleId/:startDate/:endDate', async (req, res) => {
+    try {
+        const { vehicleId, startDate, endDate } = req.params;
+        
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid date format. Use YYYY-MM-DD format.'
+            });
+        }
+        
+        const timeline = await tripTimelineService.getTimelineForPeriod(vehicleId, start, end);
+        
+        res.json({
+            success: true,
+            timeline,
+            period: {
+                start: startDate,
+                end: endDate
+            },
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error fetching vehicle timeline for period:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch vehicle timeline for specified period',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
+// Get route points for specific vehicle and time period (for map visualization)
+router.get('/route-points/:vehicleId', async (req, res) => {
+    try {
+        const { vehicleId } = req.params;
+        const { startDate, endDate, limit } = req.query;
+        
+        // Default to today if no dates specified
+        const start = startDate ? new Date(startDate as string) : (() => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return today;
+        })();
+        
+        const end = endDate ? new Date(endDate as string) : (() => {
+            const today = new Date();
+            today.setHours(23, 59, 59, 999);
+            return today;
+        })();
+        
+        const timeline = await tripTimelineService.getTimelineForPeriod(vehicleId, start, end);
+        
+        // Extract route points for map visualization
+        const routePoints = timeline.summary.routePoints.slice(0, parseInt(limit as string) || 1000);
+        
+        res.json({
+            success: true,
+            vehicleId,
+            vehicleName: timeline.vehicleName,
+            period: {
+                start: start.toISOString(),
+                end: end.toISOString()
+            },
+            routePoints,
+            count: routePoints.length,
+            summary: {
+                totalDistance: timeline.summary.totalDistance,
+                totalDuration: timeline.summary.totalDuration,
+                clientVisits: timeline.summary.clientVisits
+            },
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error fetching route points:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch route points',
             details: error instanceof Error ? error.message : 'Unknown error'
         });
     }

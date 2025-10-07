@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { jobberClient } from '../services/jobberClient';
+import { FordPassClient } from '../services/fordpassClient';
 
 const router = Router();
 
@@ -267,144 +268,139 @@ router.get('/jobber/mongodb-test', async (req, res) => {
     }
 });
 
-// Smartcar OAuth callback
-router.get('/smartcar/callback', async (req, res) => {
-    const { code, state, error } = req.query;
 
-    if (error) {
-        return res.status(400).json({ 
-            error: 'OAuth authorization failed', 
-            details: error 
-        });
-    }
 
-    if (state !== 'sparklawn-connect') {
-        return res.status(400).json({ 
-            error: 'Invalid state parameter' 
-        });
-    }
 
-    if (!code) {
-        return res.status(400).json({ 
-            error: 'Authorization code not provided' 
-        });
-    }
-
+// FordPass direct authentication test
+router.get('/fordpass', async (req, res) => {
     try {
-        // Exchange authorization code for access token
-        const clientId = process.env.SMARTCAR_CLIENT_ID;
-        const clientSecret = process.env.SMARTCAR_CLIENT_SECRET;
-        const redirectUri = process.env.SMARTCAR_REDIRECT_URI || 'https://sparklawn-vehicle-dashboard.onrender.com/auth/smartcar/callback';
-
-        const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+        const fordpassConfig = {
+            username: process.env.FORDPASS_USERNAME || '',
+            password: process.env.FORDPASS_PASSWORD || '',
+            vin: process.env.FORDPASS_VIN || ''
+        };
         
-        const tokenResponse = await fetch('https://auth.smartcar.com/oauth/token', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Basic ${auth}`,
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: new URLSearchParams({
-                grant_type: 'authorization_code',
-                code: code as string,
-                redirect_uri: redirectUri
-            })
-        });
-
-        if (!tokenResponse.ok) {
-            const errorData = await tokenResponse.text();
-            throw new Error(`Token exchange failed: ${tokenResponse.status} ${errorData}`);
+        if (!fordpassConfig.username || !fordpassConfig.password || !fordpassConfig.vin) {
+            return res.status(400).json({ 
+                error: 'FordPass credentials not configured',
+                details: 'Missing FORDPASS_USERNAME, FORDPASS_PASSWORD, or FORDPASS_VIN environment variables'
+            });
         }
-
-        const tokens = await tokenResponse.json();
-
-        // Display tokens for manual configuration (and auto-save to MongoDB)
-        const { tokenManager } = await import('../services/tokenManager');
+        
+        const fordpassClient = new FordPassClient(fordpassConfig);
         
         try {
-            // Save to MongoDB automatically
-            const tokenData = {
-                clientId: clientId!,
-                clientSecret: clientSecret!,
-                accessToken: tokens.access_token,
-                refreshToken: tokens.refresh_token,
-                expiresAt: new Date(Date.now() + tokens.expires_in * 1000),
-                lastUpdated: new Date()
-            };
-            
-            await tokenManager.saveTokens(tokenData);
-            console.log('✅ Smartcar tokens saved to MongoDB automatically');
-        } catch (dbError) {
-            console.error('⚠️ Failed to save tokens to MongoDB:', dbError);
+            await fordpassClient.authenticateDirectly();
+            res.json({
+                success: true,
+                message: 'FordPass direct authentication successful! Real-time GPS data is now available.',
+                note: 'Ford SSO domain had DNS issues, so we used direct IBM Cloud authentication instead'
+            });
+        } catch (authError) {
+            res.status(401).json({
+                success: false,
+                error: 'FordPass authentication failed',
+                details: authError instanceof Error ? authError.message : 'Unknown authentication error'
+            });
         }
-
-        // Display success page
-        res.send(`
-            <html>
-                <head>
-                    <title>Smartcar Connection Success</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-                        .success { color: #28a745; }
-                        .token-box { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
-                    </style>
-                </head>
-                <body>
-                    <h1 class="success">✅ Vehicles Connected Successfully!</h1>
-                    <p>Your SparkLawn Fleet Tracker is now connected to your Ford vehicles.</p>
-                    
-                    <h3>🚗 Connection Details:</h3>
-                    <div class="token-box">
-                        <strong>Access Token:</strong> ${tokens.access_token.substring(0, 20)}...<br>
-                        <strong>Expires in:</strong> ${tokens.expires_in} seconds (${Math.round(tokens.expires_in / 3600)} hours)<br>
-                        <strong>Auto-saved to MongoDB:</strong> ✅ Yes
-                    </div>
-                    
-                    <h3>🚀 Next Steps:</h3>
-                    <ol>
-                        <li>Tokens are automatically saved to your database</li>
-                        <li>Return to your dashboard to see your vehicles</li>
-                        <li>Your vehicles will now appear on the map</li>
-                    </ol>
-                    
-                    <p><a href="/">← Back to Dashboard</a></p>
-                </body>
-            </html>
-        `);
-
     } catch (error) {
-        console.error('Smartcar OAuth callback error:', error);
-        res.status(500).json({ 
+        res.status(500).json({
+            error: 'Failed to test FordPass authentication',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
+// FordPass manual token exchange
+router.post('/fordpass/exchange', async (req, res) => {
+    try {
+        const { authCode } = req.body;
+        
+        if (!authCode) {
+            return res.status(400).json({
+                error: 'Authorization code required',
+                details: 'Provide the authCode extracted from the browser developer tools'
+            });
+        }
+        
+        const fordpassConfig = {
+            username: process.env.FORDPASS_USERNAME || '',
+            password: process.env.FORDPASS_PASSWORD || '',
+            vin: process.env.FORDPASS_VIN || ''
+        };
+        
+        const fordpassClient = new FordPassClient(fordpassConfig);
+        
+        // First generate the authorization URL to set up code verifier
+        fordpassClient.getAuthorizationUrl();
+        
+        // Then exchange the code for tokens
+        await fordpassClient.exchangeCodeForTokens(authCode);
+        
+        res.json({
+            success: true,
+            message: 'FordPass tokens obtained successfully! You can now access real-time GPS data.',
+            nextSteps: [
+                'Tokens are temporarily stored in memory',
+                'Vehicle data will now use FordPass instead of Smartcar',
+                'Check the dashboard for updated location data'
+            ]
+        });
+    } catch (error) {
+        console.error('FordPass token exchange error:', error);
+        res.status(500).json({
             error: 'Failed to exchange authorization code for tokens',
             details: error instanceof Error ? error.message : 'Unknown error'
         });
     }
 });
 
-// Test endpoint for Smartcar MongoDB token management
-router.get('/smartcar/mongodb-test', async (req, res) => {
+// FordPass status check
+router.get('/fordpass/status', async (req, res) => {
     try {
-        const { tokenManager } = await import('../services/tokenManager');
+        const fordpassConfig = {
+            username: process.env.FORDPASS_USERNAME || '',
+            password: process.env.FORDPASS_PASSWORD || '',
+            vin: process.env.FORDPASS_VIN || ''
+        };
         
-        console.log('Testing Smartcar MongoDB token retrieval...');
-        const tokens = await tokenManager.getCurrentTokens();
+        if (!fordpassConfig.username || !fordpassConfig.password || !fordpassConfig.vin) {
+            return res.json({
+                connected: false,
+                error: 'FordPass credentials not configured',
+                hasCredentials: {
+                    username: !!fordpassConfig.username,
+                    password: !!fordpassConfig.password,
+                    vin: !!fordpassConfig.vin
+                }
+            });
+        }
         
-        res.json({
-            success: true,
-            hasTokens: !!tokens,
-            tokenInfo: tokens ? {
-                hasAccessToken: !!tokens.accessToken,
-                hasRefreshToken: !!tokens.refreshToken,
-                expiresAt: tokens.expiresAt,
-                lastUpdated: tokens.lastUpdated,
-                accessTokenStart: tokens.accessToken?.substring(0, 20)
-            } : null
-        });
+        const fordpassClient = new FordPassClient(fordpassConfig);
+        
+        try {
+            // Try to get vehicle status to test connection
+            const vehicleStatus = await fordpassClient.getVehicleStatus();
+            
+            res.json({
+                connected: true,
+                message: 'FordPass API connection successful',
+                vin: fordpassConfig.vin,
+                hasGPS: !!(vehicleStatus.gps?.latitude && vehicleStatus.gps?.longitude),
+                hasBattery: !!vehicleStatus.batteryFillLevel?.value
+            });
+        } catch (error) {
+            res.json({
+                connected: false,
+                error: error instanceof Error ? error.message : 'Unknown error',
+                message: 'FordPass API connection failed - may need manual OAuth token'
+            });
+        }
     } catch (error) {
         res.json({
-            success: false,
+            connected: false,
             error: error instanceof Error ? error.message : 'Unknown error',
-            details: 'Smartcar MongoDB token test failed'
+            message: 'FordPass configuration error'
         });
     }
 });

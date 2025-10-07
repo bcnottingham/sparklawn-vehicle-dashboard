@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SparkLawn Fleet - Trip Analytics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0f1c 0%, #1a1f2e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(16, 185, 129, 0.1);
+            border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #10b981;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-btn {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(16, 185, 129, 0.3);
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            height: calc(100vh - 80px);
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .sidebar {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+            padding: 1.5rem;
+        }
+
+        .sidebar-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            color: #10b981;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group {
+            margin-bottom: 1rem;
+        }
+
+        .filter-label {
+            display: block;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .filter-input, .filter-select {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 0.9rem;
+        }
+
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .date-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .vehicle-filters {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .vehicle-filter {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .vehicle-filter:hover {
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .vehicle-filter.active {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .vehicle-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #10b981;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+        }
+
+        .vehicle-checkbox.checked {
+            background: #10b981;
+        }
+
+        .trip-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .trip-item {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .trip-item:hover {
+            background: rgba(16, 185, 129, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .trip-item.selected {
+            background: rgba(16, 185, 129, 0.25);
+            border-color: #10b981;
+        }
+
+        .trip-vehicle {
+            color: #10b981;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .trip-time {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            margin: 0.25rem 0;
+        }
+
+        .trip-route {
+            color: #ffffff;
+            font-size: 0.85rem;
+        }
+
+        .trip-distance {
+            color: #6b7280;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+
+        .map-container {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-header {
+            background: rgba(16, 185, 129, 0.1);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .map-title {
+            color: #10b981;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .trip-counter {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        #tripMap {
+            height: calc(100vh - 200px);
+            width: 100%;
+        }
+
+        .trip-details-panel {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(10, 15, 28, 0.95);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            min-width: 280px;
+            backdrop-filter: blur(10px);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .trip-details-panel.visible {
+            transform: translateY(0);
+        }
+
+        .detail-header {
+            color: #10b981;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .detail-label {
+            color: #94a3b8;
+        }
+
+        .detail-value {
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: #94a3b8;
+        }
+
+        .error {
+            color: #ef4444;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .no-trips {
+            text-align: center;
+            color: #94a3b8;
+            padding: 2rem;
+        }
+
+        .filter-summary {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌱 SparkLawn Fleet - Trip Analytics</h1>
+        <a href="/fleet-advanced" class="back-btn">← Back to Dashboard</a>
+    </div>
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Filters -->
+            <div class="sidebar-section">
+                <div class="section-title">Filters</div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">Date Range</label>
+                    <div class="date-inputs">
+                        <input type="date" class="filter-input" id="startDate" onchange="applyFilters()">
+                        <input type="date" class="filter-input" id="endDate" onchange="applyFilters()">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Vehicles</label>
+                    <div class="vehicle-filters" id="vehicleFilters">
+                        <!-- Vehicle checkboxes will be populated here -->
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Search</label>
+                    <input type="text" class="filter-input" id="searchInput" 
+                           placeholder="Search locations..." 
+                           onkeyup="applyFilters()">
+                </div>
+
+                <div class="filter-summary" id="filterSummary">
+                    Loading filters...
+                </div>
+            </div>
+
+            <!-- Trip List -->
+            <div class="sidebar-section">
+                <div class="section-title">Trips</div>
+                <div class="trip-list" id="tripList">
+                    <div class="loading">Loading trips...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map -->
+        <div class="map-container">
+            <div class="map-header">
+                <div class="map-title">Trip Visualization</div>
+                <div class="trip-counter" id="tripCounter">0 trips</div>
+            </div>
+            <div id="tripMap"></div>
+            
+            <!-- Trip Details Panel -->
+            <div class="trip-details-panel" id="tripDetailsPanel">
+                <div class="detail-header" id="detailHeader">Select a trip</div>
+                <div class="detail-row">
+                    <span class="detail-label">Vehicle:</span>
+                    <span class="detail-value" id="detailVehicle">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Start Time:</span>
+                    <span class="detail-value" id="detailStartTime">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">End Time:</span>
+                    <span class="detail-value" id="detailEndTime">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Distance:</span>
+                    <span class="detail-value" id="detailDistance">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Duration:</span>
+                    <span class="detail-value" id="detailDuration">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Battery Used:</span>
+                    <span class="detail-value" id="detailBattery">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let map;
+        let allTrips = [];
+        let filteredTrips = [];
+        let selectedTrip = null;
+        let tripMarkers = [];
+        let routePaths = [];
+        
+        const vehicleConfig = [
+            { id: '1FT6W1EV3PWG37779', name: 'Lightning 2', color: '#10b981' },
+            { id: '1FTBW1XK6PKA30591', name: 'eTransit 1', color: '#3b82f6' },
+            { id: '1FTVW1EV3NWG07402', name: 'Lightning 3', color: '#f59e0b' },
+            { id: '1FTVW1EL3NWG00285', name: 'Lightning 1', color: '#ef4444' }
+        ];
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDateFilters();
+            initializeVehicleFilters();
+            loadGoogleMaps();
+        });
+
+        function initializeDateFilters() {
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            document.getElementById('startDate').value = yesterday.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+        }
+
+        function initializeVehicleFilters() {
+            const container = document.getElementById('vehicleFilters');
+            
+            // Add "All Vehicles" option
+            const allOption = createVehicleFilter('all', 'All Vehicles', '#10b981', true);
+            container.appendChild(allOption);
+            
+            // Add individual vehicle options
+            vehicleConfig.forEach(vehicle => {
+                const option = createVehicleFilter(vehicle.id, vehicle.name, vehicle.color, true);
+                container.appendChild(option);
+            });
+        }
+
+        function createVehicleFilter(id, name, color, checked = false) {
+            const div = document.createElement('div');
+            div.className = `vehicle-filter ${checked ? 'active' : ''}`;
+            div.onclick = () => toggleVehicleFilter(id);
+            
+            div.innerHTML = `
+                <div class="vehicle-checkbox ${checked ? 'checked' : ''}" style="border-color: ${color}; ${checked ? `background: ${color}` : ''}">
+                    ${checked ? '✓' : ''}
+                </div>
+                <span style="color: ${color}">${name}</span>
+            `;
+            
+            return div;
+        }
+
+        function toggleVehicleFilter(vehicleId) {
+            const filterElement = document.querySelector(`[onclick="toggleVehicleFilter('${vehicleId}')"]`);
+            if (!filterElement) return;
+            const checkbox = filterElement.querySelector('.vehicle-checkbox');
+            if (!checkbox) return;
+            const isChecked = checkbox.classList.contains('checked');
+            
+            if (vehicleId === 'all') {
+                // Toggle all vehicles
+                const allFilters = document.querySelectorAll('.vehicle-filter');
+                const newState = !isChecked;
+                
+                allFilters.forEach(filter => {
+                    const cb = filter.querySelector('.vehicle-checkbox');
+                    if (newState) {
+                        filter.classList.add('active');
+                        cb.classList.add('checked');
+                        cb.textContent = '✓';
+                    } else {
+                        filter.classList.remove('active');
+                        cb.classList.remove('checked');
+                        cb.textContent = '';
+                        cb.style.background = 'transparent';
+                    }
+                });
+            } else {
+                // Toggle individual vehicle
+                if (isChecked) {
+                    filterElement.classList.remove('active');
+                    checkbox.classList.remove('checked');
+                    checkbox.textContent = '';
+                    checkbox.style.background = 'transparent';
+                } else {
+                    filterElement.classList.add('active');
+                    checkbox.classList.add('checked');
+                    checkbox.textContent = '✓';
+                    const color = vehicleConfig.find(v => v.id === vehicleId)?.color || '#10b981';
+                    checkbox.style.background = color;
+                }
+                
+                // Uncheck "All" if individual vehicle is unchecked
+                if (!isChecked === false) {
+                    const allFilter = document.querySelector(`[onclick="toggleVehicleFilter('all')"]`);
+                    const allCheckbox = allFilter.querySelector('.vehicle-checkbox');
+                    allFilter.classList.remove('active');
+                    allCheckbox.classList.remove('checked');
+                    allCheckbox.textContent = '';
+                    allCheckbox.style.background = 'transparent';
+                }
+            }
+            
+            applyFilters();
+        }
+
+        async function loadGoogleMaps() {
+            try {
+                const configResponse = await fetch('/api/config/google-maps-key');
+                let apiKey = '';
+                
+                if (configResponse.ok) {
+                    const config = await configResponse.json();
+                    apiKey = config.apiKey;
+                }
+                
+                const script = document.createElement('script');
+                script.async = true;
+                script.defer = true;
+                script.src = apiKey 
+                    ? `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry&callback=initMap&loading=async`
+                    : 'https://maps.googleapis.com/maps/api/js?libraries=geometry&callback=initMap&loading=async';
+                
+                script.onerror = () => {
+                    document.getElementById('tripMap').innerHTML = '<div class="error">Failed to load Google Maps</div>';
+                };
+                
+                document.head.appendChild(script);
+                
+            } catch (error) {
+                console.error('Error loading Google Maps:', error);
+                document.getElementById('tripMap').innerHTML = '<div class="error">Maps configuration error</div>';
+            }
+        }
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('tripMap'), {
+                zoom: 11,
+                center: { lat: 36.1627, lng: -94.1574 }, // Northwest Arkansas
+                styles: [
+                    { featureType: "all", elementType: "geometry.fill", stylers: [{ color: "#1a1f2e" }] },
+                    { featureType: "water", elementType: "geometry", stylers: [{ color: "#0a0e1a" }] },
+                    { featureType: "road", elementType: "geometry", stylers: [{ color: "#2a3441" }] },
+                    { featureType: "all", elementType: "labels.text.stroke", stylers: [{ visibility: "off" }] },
+                    { featureType: "all", elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] }
+                ]
+            });
+            
+            loadTripData();
+        }
+
+        async function loadTripData() {
+            try {
+                console.log('🔄 Loading trip data...');
+                allTrips = [];
+                let tripIdCounter = 1;
+                
+                for (const vehicle of vehicleConfig) {
+                    try {
+                        const response = await fetch(`/api/trips/timeline/${vehicle.id}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success && data.timeline && data.timeline.trips) {
+                                data.timeline.trips.forEach(timelineTrip => {
+                                    allTrips.push({
+                                        id: `trip-${tripIdCounter++}`,
+                                        vehicleId: vehicle.id,
+                                        vehicleName: vehicle.name,
+                                        vehicleColor: vehicle.color,
+                                        startTime: new Date(timelineTrip.startTime),
+                                        endTime: new Date(timelineTrip.endTime),
+                                        startLocation: {
+                                            latitude: timelineTrip.startLocation.latitude,
+                                            longitude: timelineTrip.startLocation.longitude,
+                                            address: timelineTrip.startLocation.address,
+                                            clientName: timelineTrip.startLocation.clientName || timelineTrip.startLocation.address
+                                        },
+                                        endLocation: {
+                                            latitude: timelineTrip.endLocation.latitude,
+                                            longitude: timelineTrip.endLocation.longitude,
+                                            address: timelineTrip.endLocation.address,
+                                            clientName: timelineTrip.endLocation.clientName || timelineTrip.endLocation.address
+                                        },
+                                        route: timelineTrip.route || [],
+                                        distance: timelineTrip.distance,
+                                        duration: timelineTrip.duration,
+                                        batteryUsed: timelineTrip.batteryUsed,
+                                        avgSpeed: timelineTrip.avgSpeed
+                                    });
+                                });
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Failed to load timeline for ${vehicle.name}:`, error);
+                    }
+                }
+                
+                console.log(`✅ Loaded ${allTrips.length} trips`);
+                applyFilters();
+                
+            } catch (error) {
+                console.error('❌ Failed to load trip data:', error);
+                document.getElementById('tripList').innerHTML = '<div class="error">Failed to load trips</div>';
+            }
+        }
+
+        function applyFilters() {
+            const startDate = new Date(document.getElementById('startDate').value);
+            const endDate = new Date(document.getElementById('endDate').value);
+            endDate.setHours(23, 59, 59, 999);
+            
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const activeVehicles = getActiveVehicles();
+            
+            filteredTrips = allTrips.filter(trip => {
+                // Date filter
+                const tripDate = trip.startTime;
+                if (tripDate < startDate || tripDate > endDate) return false;
+                
+                // Vehicle filter
+                if (!activeVehicles.includes(trip.vehicleId)) return false;
+                
+                // Search filter
+                if (searchTerm) {
+                    const searchText = `${trip.startLocation.clientName} ${trip.endLocation.clientName} ${trip.vehicleName}`.toLowerCase();
+                    if (!searchText.includes(searchTerm)) return false;
+                }
+                
+                return true;
+            });
+            
+            updateTripList();
+            updateTripCounter();
+            updateFilterSummary();
+            showTripsOnMap();
+        }
+
+        function getActiveVehicles() {
+            const activeVehicles = [];
+            const filters = document.querySelectorAll('.vehicle-filter.active');
+            
+            filters.forEach(filter => {
+                const onclick = filter.getAttribute('onclick');
+                if (!onclick) return;
+                const match = onclick.match(/'([^']+)'/);
+                if (!match) return;
+                const vehicleId = match[1];
+                if (vehicleId !== 'all') {
+                    activeVehicles.push(vehicleId);
+                }
+            });
+            
+            return activeVehicles.length === 0 ? vehicleConfig.map(v => v.id) : activeVehicles;
+        }
+
+        function updateTripList() {
+            const tripList = document.getElementById('tripList');
+            
+            if (filteredTrips.length === 0) {
+                tripList.innerHTML = '<div class="no-trips">No trips found</div>';
+                return;
+            }
+            
+            tripList.innerHTML = '';
+            
+            filteredTrips
+                .sort((a, b) => b.startTime - a.startTime)
+                .forEach(trip => {
+                    const tripElement = document.createElement('div');
+                    tripElement.className = 'trip-item';
+                    tripElement.onclick = () => selectTrip(trip);
+                    
+                    const startTime = trip.startTime.toLocaleTimeString('en-US', { 
+                        hour: 'numeric', 
+                        minute: '2-digit', 
+                        hour12: true 
+                    });
+                    const endTime = trip.endTime.toLocaleTimeString('en-US', { 
+                        hour: 'numeric', 
+                        minute: '2-digit', 
+                        hour12: true 
+                    });
+                    
+                    const date = trip.startTime.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    
+                    // Format client names to show home base properly
+                    const formatClientName = (clientName) => {
+                        if (!clientName) return 'Unknown';
+                        // If backend already sent home base emoji, use it
+                        if (clientName.includes('🏠')) return clientName;
+                        // If it's McRay Shop, add home base emoji
+                        if (clientName.toLowerCase().includes('mcray shop') || clientName.toLowerCase().includes('mcray')) {
+                            return '🏠 McRay Shop';
+                        }
+                        return clientName;
+                    };
+
+                    const startClientFormatted = formatClientName(trip.startLocation.clientName);
+                    const endClientFormatted = formatClientName(trip.endLocation.clientName);
+
+                    tripElement.innerHTML = `
+                        <div class="trip-vehicle" style="color: ${trip.vehicleColor}">${trip.vehicleName}</div>
+                        <div class="trip-time">${date} ${startTime} - ${endTime}</div>
+                        <div class="trip-route">${startClientFormatted} → ${endClientFormatted}</div>
+                        <div class="trip-distance">${trip.distance?.toFixed(1) || '?'} mi • ${trip.duration?.toFixed(0) || '?'} min</div>
+                    `;
+                    
+                    tripList.appendChild(tripElement);
+                });
+        }
+
+        function updateTripCounter() {
+            document.getElementById('tripCounter').textContent = `${filteredTrips.length} trip${filteredTrips.length !== 1 ? 's' : ''}`;
+        }
+
+        function updateFilterSummary() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const searchTerm = document.getElementById('searchInput').value;
+            const activeVehicles = getActiveVehicles();
+            
+            let summary = `${startDate} to ${endDate}`;
+            if (activeVehicles.length < vehicleConfig.length) {
+                summary += ` • ${activeVehicles.length} vehicle${activeVehicles.length !== 1 ? 's' : ''}`;
+            }
+            if (searchTerm) {
+                summary += ` • "${searchTerm}"`;
+            }
+            
+            document.getElementById('filterSummary').textContent = summary;
+        }
+
+        function selectTrip(trip) {
+            // Update selection in list
+            document.querySelectorAll('.trip-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            selectedTrip = trip;
+            showTripDetails(trip);
+            centerMapOnTrip(trip);
+        }
+
+        function showTripsOnMap() {
+            clearMapElements();
+            
+            if (filteredTrips.length === 0) return;
+            
+            filteredTrips.forEach(trip => {
+                // Helper function to check if location is home base
+                const isHomeBase = (clientName) => {
+                    return clientName && (clientName.includes('🏠') || clientName.toLowerCase().includes('mcray shop') || clientName.toLowerCase().includes('mcray'));
+                };
+
+                // Helper function to create marker icon
+                const createMarkerIcon = (vehicleColor, clientName) => {
+                    const isHome = isHomeBase(clientName);
+                    return {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: isHome ? 10 : 8,
+                        fillColor: vehicleColor,
+                        fillOpacity: 0.8,
+                        strokeColor: isHome ? '#fbbf24' : '#ffffff', // Yellow outline for home base
+                        strokeWeight: isHome ? 3 : 2
+                    };
+                };
+
+                // Start marker
+                const startMarker = new google.maps.Marker({
+                    position: { lat: trip.startLocation.latitude, lng: trip.startLocation.longitude },
+                    map: map,
+                    title: `Start: ${trip.startLocation.clientName}`,
+                    icon: createMarkerIcon(trip.vehicleColor, trip.startLocation.clientName)
+                });
+
+                // End marker
+                const endMarker = new google.maps.Marker({
+                    position: { lat: trip.endLocation.latitude, lng: trip.endLocation.longitude },
+                    map: map,
+                    title: `End: ${trip.endLocation.clientName}`,
+                    icon: createMarkerIcon(trip.vehicleColor, trip.endLocation.clientName)
+                });
+                
+                tripMarkers.push(startMarker, endMarker);
+                
+                // Route path
+                if (trip.route && trip.route.length > 1) {
+                    const routePath = new google.maps.Polyline({
+                        path: trip.route.map(point => ({
+                            lat: point.latitude,
+                            lng: point.longitude
+                        })),
+                        geodesic: true,
+                        strokeColor: trip.vehicleColor,
+                        strokeOpacity: 0.6,
+                        strokeWeight: 3,
+                        map: map
+                    });
+                    
+                    routePaths.push(routePath);
+                }
+            });
+            
+            // Fit map to show all trips
+            if (filteredTrips.length > 0) {
+                const bounds = new google.maps.LatLngBounds();
+                filteredTrips.forEach(trip => {
+                    bounds.extend({ lat: trip.startLocation.latitude, lng: trip.startLocation.longitude });
+                    bounds.extend({ lat: trip.endLocation.latitude, lng: trip.endLocation.longitude });
+                });
+                map.fitBounds(bounds);
+            }
+        }
+
+        function centerMapOnTrip(trip) {
+            // Highlight selected trip
+            clearMapElements();
+            
+            // Show all trips with reduced opacity
+            showTripsOnMap();
+            
+            // Highlight selected trip
+            const routePath = new google.maps.Polyline({
+                path: trip.route.map(point => ({
+                    lat: point.latitude,
+                    lng: point.longitude
+                })),
+                geodesic: true,
+                strokeColor: trip.vehicleColor,
+                strokeOpacity: 1,
+                strokeWeight: 5,
+                map: map
+            });
+            
+            routePaths.push(routePath);
+            
+            // Center on trip
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend({ lat: trip.startLocation.latitude, lng: trip.startLocation.longitude });
+            bounds.extend({ lat: trip.endLocation.latitude, lng: trip.endLocation.longitude });
+            map.fitBounds(bounds);
+        }
+
+        function showTripDetails(trip) {
+            const panel = document.getElementById('tripDetailsPanel');
+            
+            document.getElementById('detailHeader').textContent = trip.vehicleName + ' Trip';
+            document.getElementById('detailVehicle').textContent = trip.vehicleName;
+            document.getElementById('detailStartTime').textContent = trip.startTime.toLocaleString();
+            document.getElementById('detailEndTime').textContent = trip.endTime.toLocaleString();
+            document.getElementById('detailDistance').textContent = trip.distance ? `${trip.distance.toFixed(1)} miles` : 'N/A';
+            document.getElementById('detailDuration').textContent = trip.duration ? `${Math.round(trip.duration)} minutes` : 'N/A';
+            document.getElementById('detailBattery').textContent = trip.batteryUsed ? `${trip.batteryUsed.toFixed(1)}%` : 'N/A';
+            
+            panel.classList.add('visible');
+        }
+
+        function clearMapElements() {
+            tripMarkers.forEach(marker => marker.setMap(null));
+            routePaths.forEach(path => path.setMap(null));
+            tripMarkers = [];
+            routePaths = [];
+        }
+    </script>
+</body>
+</html>

@@ -2,11 +2,10 @@ import { Router } from 'express';
 import { geofencingService, VehicleLocation } from '../services/geofencing';
 import { jobberClient } from '../services/jobberClient';
 import { notificationService } from '../services/notifications';
-import { SmartcarClient } from '../smartcar/smartcarClient';
 import { vehicleNaming } from '../services/vehicleNaming';
+import { hybridVehicleClient } from '../services/hybridVehicleClient';
 
 const router = Router();
-const smartcarClient = new SmartcarClient();
 
 // Initialize geofencing with Jobber data
 router.post('/initialize', async (req, res) => {
@@ -57,12 +56,13 @@ router.get('/zones/:type', (req, res) => {
 // Check current vehicle positions against geofences
 router.post('/check', async (req, res) => {
     try {
-        const vehicles = await smartcarClient.getVehicles();
+        const vehicles = await hybridVehicleClient.getVehicles();
         const events = [];
 
         for (const vehicleId of vehicles.vehicles) {
             try {
-                const location = await smartcarClient.getVehicleLocation(vehicleId);
+                const vehicleData = await hybridVehicleClient.getVehicleData(vehicleId);
+                const location = { latitude: vehicleData.location.latitude, longitude: vehicleData.location.longitude };
                 const vehicleName = vehicleNaming.setVehicleName(vehicleId);
                 
                 const vehicleLocation: VehicleLocation = {
@@ -99,7 +99,7 @@ router.post('/check', async (req, res) => {
 // Get current zones for all vehicles
 router.get('/vehicle-zones', async (req, res) => {
     try {
-        const vehicles = await smartcarClient.getVehicles();
+        const vehicles = await hybridVehicleClient.getVehicles();
         const vehicleZones = [];
 
         for (const vehicleId of vehicles.vehicles) {
@@ -201,7 +201,8 @@ router.get('/jobber/jobs/today', async (req, res) => {
 router.post('/check/:vehicleId', async (req, res) => {
     try {
         const { vehicleId } = req.params;
-        const location = await smartcarClient.getVehicleLocation(vehicleId);
+        const vehicleData = await hybridVehicleClient.getVehicleData(vehicleId);
+        const location = { latitude: vehicleData.location.latitude, longitude: vehicleData.location.longitude };
         const vehicleName = vehicleNaming.setVehicleName(vehicleId);
         
         const vehicleLocation: VehicleLocation = {
