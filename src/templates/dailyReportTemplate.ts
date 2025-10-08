@@ -506,11 +506,12 @@ export function generateDailyReportHTML(data: DailyReportData): string {
                         const badgeText = visit.isClient ? 'Client' : 'Other';
                         const arrivalTimeStr = formatTime(visit.arrivalTime.toISOString());
                         const departureTimeStr = formatTime(visit.departureTime.toISOString());
+                        const mapsLink = `https://www.google.com/maps/search/?api=1&query=${visit.latitude},${visit.longitude}`;
 
                         return `
                     <div class="client-visit-item">
                         <div class="client-visit-name">
-                            ${visit.name}
+                            <a href="${mapsLink}" target="_blank" style="color: inherit; text-decoration: none;">${visit.name}</a>
                             <span class="visit-type-badge ${badgeClass}">${badgeText}</span>
                         </div>
                         <div class="client-visit-time">${arrivalTimeStr} - ${departureTimeStr}<span class="duration">(${formatDuration(visit.totalMinutes)})</span></div>
@@ -527,6 +528,8 @@ export function generateDailyReportHTML(data: DailyReportData): string {
                         const endTime = formatTime(trip.endTime);
                         const startLocation = trip.startLocation?.address || 'Unknown';
                         const endLocation = trip.endLocation?.address || 'Unknown';
+                        const startMapsLink = `https://www.google.com/maps/search/?api=1&query=${trip.startLocation?.latitude || 0},${trip.startLocation?.longitude || 0}`;
+                        const endMapsLink = `https://www.google.com/maps/search/?api=1&query=${trip.endLocation?.latitude || 0},${trip.endLocation?.longitude || 0}`;
 
                         const isEndHomeBase = trip.endLocation?.clientName?.includes('🏠') ||
                                             trip.endLocation?.clientName?.includes('McRay Shop') ||
@@ -541,9 +544,9 @@ export function generateDailyReportHTML(data: DailyReportData): string {
                     <div class="trip-item">
                         <div class="trip-time-span">${startTime} - ${endTime}</div>
                         <div class="trip-route">
-                            ${startLocation}
+                            <a href="${startMapsLink}" target="_blank" style="color: inherit; text-decoration: none;">${startLocation}</a>
                             <span class="trip-arrow">→</span>
-                            ${endLocation}${clientBadge}
+                            <a href="${endMapsLink}" target="_blank" style="color: inherit; text-decoration: none;">${endLocation}${clientBadge}</a>
                         </div>
                         <div class="trip-metrics-inline">
                             <span class="trip-metric-inline">${formatDuration(durationMinutes)}</span>
