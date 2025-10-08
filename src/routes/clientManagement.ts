@@ -22,7 +22,7 @@ interface ClientCache {
     [address: string]: ClientCacheEntry;
 }
 
-const CACHE_FILE_PATH = path.join(__dirname, '../../../sparklawn-website-manager/client-coordinates-cache.json');
+const CACHE_FILE_PATH = path.join(__dirname, '../../client-coordinates-cache.json');
 
 // GET /api/clients - List all clients
 router.get('/', async (req, res) => {
