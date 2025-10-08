@@ -483,11 +483,12 @@
             }
 
             /* Hide filter buttons on mobile, show only counts */
-            .section > div:first-of-type {
-                margin-bottom: 12px;
+            .location-filters {
+                flex-direction: column !important;
+                align-items: stretch !important;
             }
 
-            .section > div:first-of-type button {
+            .location-filters .filter-btn {
                 display: none !important;
             }
 
@@ -694,10 +695,10 @@
             <div id="clientsLoading" class="loading">Loading clients...</div>
             <div id="clientsContainer" style="display: none;">
                 <!-- Map Actions -->
-                <div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
+                <div class="location-filters" style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
                     <button
                         onclick="showAllClientsOnMap()"
-                        class="btn btn-secondary"
+                        class="btn btn-secondary filter-btn"
                         style="padding: 8px 16px; font-size: 12px;"
                         title="Show all client locations as pins on the map"
                     >
@@ -705,7 +706,7 @@
                     </button>
                     <button
                         onclick="showActiveClientsOnMap()"
-                        class="btn btn-primary"
+                        class="btn btn-primary filter-btn"
                         style="padding: 8px 16px; font-size: 12px; margin-left: 8px;"
                         title="Show only active clients on the map"
                     >
@@ -713,7 +714,7 @@
                     </button>
                     <button
                         onclick="showResidentialOnly()"
-                        class="btn btn-secondary"
+                        class="btn btn-secondary filter-btn"
                         style="padding: 8px 16px; font-size: 12px; margin-left: 8px;"
                         title="Show only residential properties"
                     >
@@ -721,7 +722,7 @@
                     </button>
                     <button
                         onclick="showCommercialOnly()"
-                        class="btn btn-secondary"
+                        class="btn btn-secondary filter-btn"
                         style="padding: 8px 16px; font-size: 12px; margin-left: 8px;"
                         title="Show only commercial properties"
                     >
