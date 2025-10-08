@@ -46,7 +46,7 @@ class ClientLocationService {
         
         try {
             // First try to load from cached client coordinates file
-            const cacheFilePath = path.join(__dirname, '../../../sparklawn-website-manager/client-coordinates-cache.json');
+            const cacheFilePath = path.join(__dirname, '../../client-coordinates-cache.json');
 
             console.log(`🔍 Looking for cache file at: ${cacheFilePath}`);
             console.log(`🔍 Cache file exists: ${fs.existsSync(cacheFilePath)}`);

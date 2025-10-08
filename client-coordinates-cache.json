@@ -1,0 +1,1112 @@
+{
+  "mcray shop, springdale, arkansas": {
+    "lat": 36.183115,
+    "lng": -94.169488,
+    "source": "manual",
+    "clientName": "McRay Shop",
+    "lastUpdated": "2025-10-07T17:44:35.408Z",
+    "priority": 0,
+    "radius": 137,
+    "isClient": false,
+    "clientType": "other",
+    "isActive": false
+  },
+  "5221 prestwick north circle, fayetteville, arkansas, 72704": {
+    "lat": 36.1320124,
+    "lng": -94.1853453,
+    "source": "osm",
+    "clientName": "Grant Davidson",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "3350 south pinnacle hills parkway, rogers, arkansas, 72758": {
+    "lat": 36.304557,
+    "lng": -94.18879,
+    "source": "osm",
+    "clientName": "Allison Schmetz (Citizens Bank)",
+    "lastUpdated": "2025-09-29T15:43:39.181Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "5500 west northgate road, rogers, arkansas, 72758": {
+    "lat": 36.305467,
+    "lng": -94.193005,
+    "source": "osm",
+    "clientName": "John Schmelzle (5500 Northgate)",
+    "lastUpdated": "2025-09-30T14:06:43.093Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "5400 west northgate road, rogers, arkansas, 72758": {
+    "lat": 36.30499,
+    "lng": -94.191859,
+    "source": "osm",
+    "clientName": "John Schmelzle (5400 Northgate)",
+    "lastUpdated": "2025-09-30T14:06:22.709Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "3503 south 55th street, suite 200, rogers, arkansas, 72758": {
+    "lat": 36.303606,
+    "lng": -94.189865,
+    "source": "pattern",
+    "clientName": "Coin Harvey, LLC C/O Colliers",
+    "lastUpdated": "2025-09-30T03:11:10.049Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "south 55th street, plaza at pinnacle, rogers, arkansas, 72758": {
+    "lat": 36.304721,
+    "lng": -94.191072,
+    "source": "pattern",
+    "clientName": "John Schmelzle (Plaza at Pinnacle)",
+    "lastUpdated": "2025-09-30T14:07:45.065Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "3825 cawood lane, springdale, ar, 72762": {
+    "lat": 36.183261,
+    "lng": -94.172616,
+    "source": "osm",
+    "clientName": "CASA of NWA",
+    "lastUpdated": "2025-09-30T03:05:48.119Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "816 metro place, lowell, arkansas, 72745": {
+    "lat": 36.259387,
+    "lng": -94.153923,
+    "source": "osm",
+    "clientName": "Circle of Life Hospice (Lowell)",
+    "lastUpdated": "2025-09-30T03:08:40.836Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "118 west johnson ave, springdale, arkansas, 72764": {
+    "lat": 36.186964,
+    "lng": -94.13217,
+    "source": "osm",
+    "clientName": "Shiloh Museum of Ozark History",
+    "lastUpdated": "2025-09-30T02:49:26.308Z",
+    "radius": 183,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "25 west champions boulevard, rogers, arkansas, 72758": {
+    "lat": 36.294696,
+    "lng": -94.1966201,
+    "source": "osm",
+    "clientName": "Justin & Meghan Wilson",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "26 w. wimbledon way, rogers, ar, 72758": {
+    "lat": 36.296677,
+    "lng": -94.2089815,
+    "source": "osm",
+    "clientName": "Diane Young",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "12 west wimbledon way, rogers, arkansas, 72758": {
+    "lat": 36.2945128,
+    "lng": -94.2073832,
+    "source": "osm",
+    "clientName": "Richie Roberts",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "2429 north gregg avenue, fayetteville, arkansas, 72703": {
+    "lat": 36.096722,
+    "lng": -94.161293,
+    "source": "osm",
+    "clientName": "Field Agent",
+    "lastUpdated": "2025-09-30T13:57:16.067Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "85 west champions boulevard, rogers, arkansas, 72758": {
+    "lat": 36.2975419,
+    "lng": -94.2026343,
+    "source": "osm",
+    "clientName": "Mark Martin (85 W Champions)",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "64 w champions blvd, rogers, ar, 72758-9567": {
+    "lat": 36.295289,
+    "lng": -94.20144,
+    "source": "osm",
+    "clientName": "Amanda Whittaker",
+    "lastUpdated": "2025-09-28T17:37:28.715Z",
+    "radius": 55
+  },
+  "1852 east joyce boulevard, fayetteville, arkansas, 72703": {
+    "lat": 36.120736,
+    "lng": -94.134148,
+    "source": "osm",
+    "clientName": "Sandlin & Parham Ltd.",
+    "lastUpdated": "2025-09-30T14:11:49.511Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "5106 sloan circle, rogers, arkansas, 72758": {
+    "lat": 36.291053,
+    "lng": -94.204962,
+    "source": "osm",
+    "clientName": "Brian Clark (5106 Sloan)",
+    "lastUpdated": "2025-09-29T16:13:51.355Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "813 sloane square, cave springs, ar, 72718": {
+    "lat": 36.276923,
+    "lng": -94.2123,
+    "source": "osm",
+    "clientName": "Christan Schell",
+    "lastUpdated": "2025-09-29T20:08:13.284Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "residential",
+    "isActive": true
+  },
+  "306 northwest a street, bentonville, arkansas, 72712": {
+    "lat": 36.3758569,
+    "lng": -94.2098062,
+    "source": "osm",
+    "clientName": "Patrick Byrd (Bentonville)",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "1753 pointer lane, fayetteville, arkansas, 72701": {
+    "lat": 36.0845211,
+    "lng": -94.1187776,
+    "source": "osm",
+    "clientName": "Will Gladden",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "1801 northeast j street, bentonville, arkansas, 72712": {
+    "lat": 36.394176,
+    "lng": -94.196138,
+    "source": "osm",
+    "clientName": "Asset Living (Hawthorne Row)",
+    "lastUpdated": "2025-10-07T15:43:28.055Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "501 n walnut avenue, fayetteville, ar, 72701": {
+    "lat": 36.0700176,
+    "lng": -94.153326,
+    "source": "osm",
+    "clientName": "Mary Gillcoatt",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "512 n olive ave, fayetteville, ar, 72701": {
+    "lat": 36.0702397,
+    "lng": -94.151224,
+    "source": "osm",
+    "clientName": "Duncan Skiles",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "4909 west magnolia street, rogers, arkansas, 72758": {
+    "lat": 36.323591,
+    "lng": -94.181227,
+    "source": "osm",
+    "clientName": "Uber Freight",
+    "lastUpdated": "2025-09-30T14:34:13.014Z",
+    "radius": 366,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "1428 east mission boulevard, fayetteville, arkansas, 72701": {
+    "lat": 36.0812586,
+    "lng": -94.1442619,
+    "source": "osm",
+    "clientName": "Carolyn Tune",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "200 e spring st., fayetteville, ar, 72701": {
+    "lat": 36.0647426,
+    "lng": -94.1554914,
+    "source": "osm",
+    "clientName": "Richard Alexander",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "330 west holly street, fayetteville, arkansas, 72703": {
+    "lat": 36.0796094,
+    "lng": -94.1642003,
+    "source": "osm",
+    "clientName": "Mary Cay Crow",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "823 via sangro road, springdale, arkansas, 72762": {
+    "lat": 36.185812,
+    "lng": -94.240125,
+    "source": "pattern",
+    "clientName": "Liberty Estates POA",
+    "lastUpdated": "2025-09-30T14:04:29.409Z",
+    "radius": 457,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "901 jones road, springdale, arkansas, 72762": {
+    "lat": 36.178385,
+    "lng": -94.209029,
+    "source": "osm",
+    "clientName": "Circle of Life Hospice (Springdale)",
+    "lastUpdated": "2025-09-30T03:09:28.555Z",
+    "radius": 140,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "5498 clear springs avenue, springdale, arkansas, 72764": {
+    "lat": 36.2052941,
+    "lng": -94.189406,
+    "source": "osm",
+    "clientName": "Noble Proctor",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "2500 northeast 11th street, building i, bentonville, arkansas, 72712": {
+    "lat": 36.3874,
+    "lng": -94.179648,
+    "source": "pattern",
+    "clientName": "CrossMar Investments (ROC I)",
+    "lastUpdated": "2025-09-30T02:48:16.499Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "2500 northeast 11th street, building ii, bentonville, arkansas, 72712": {
+    "lat": 36.386161,
+    "lng": -94.179866,
+    "source": "pattern",
+    "clientName": "CrossMar Investments (ROC II)",
+    "lastUpdated": "2025-09-30T03:10:41.351Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "1711 west hudson road, rogers, arkansas, 72756": {
+    "lat": 36.355847,
+    "lng": -94.142633,
+    "source": "osm",
+    "clientName": "Heritage Indian",
+    "lastUpdated": "2025-09-30T13:55:40.786Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "1201 northeast legacy parkway, bentonville, arkansas, 72712": {
+    "lat": 36.381319,
+    "lng": -94.193567,
+    "source": "osm",
+    "clientName": "Circle of Life Hospice (Bentonville)",
+    "lastUpdated": "2025-09-30T03:08:04.082Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "701 via sangro road, springdale, arkansas, 72762": {
+    "lat": 36.1853678,
+    "lng": -94.240486,
+    "source": "osm",
+    "clientName": "Paula Neal",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "3712 south pinnacle hills parkway, suite 101, rogers, arkansas, 72758": {
+    "lat": 36.302039,
+    "lng": -94.190332,
+    "source": "pattern",
+    "clientName": "Signature Bank",
+    "lastUpdated": "2025-09-30T02:47:31.943Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "316 west adams street, fayetteville, arkansas, 72701": {
+    "lat": 36.0765958,
+    "lng": -94.1635124,
+    "source": "osm",
+    "clientName": "Carol Young",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "800 se c street, bentonville, arkansas, 72712": {
+    "lat": 36.363037,
+    "lng": -94.205295,
+    "source": "osm",
+    "clientName": "Thaden School",
+    "lastUpdated": "2025-09-30T02:45:30.783Z",
+    "radius": 150,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "8 west pinnacle drive, rogers, arkansas, 72758": {
+    "lat": 36.2993507,
+    "lng": -94.1917248,
+    "source": "osm",
+    "clientName": "Constance Bores",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "5269 clear creek boulevard, wheeler, arkansas, 72704": {
+    "lat": 36.2,
+    "lng": -94.2,
+    "source": "pattern",
+    "clientName": "Patrick Risch",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "525 n. olive avenue, fayetteville, ar, 72701": {
+    "lat": 36.070606,
+    "lng": -94.1517973,
+    "source": "osm",
+    "clientName": "Art Hobson",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "4800 south vaughn road, bentonville, arkansas, 72713": {
+    "lat": 36.327796,
+    "lng": -94.304137,
+    "source": "osm",
+    "clientName": "Buffington Homes (McKissic POA)",
+    "lastUpdated": "2025-09-29T16:13:14.246Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "501 sw ramsey ln, bentonville, ar, 72712": {
+    "lat": 36.3679381,
+    "lng": -94.248158,
+    "source": "osm",
+    "clientName": "Zachary Watts",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "5068 south strathmore station drive, rogers, arkansas, 72758": {
+    "lat": 36.2898817,
+    "lng": -94.2113609,
+    "source": "osm",
+    "clientName": "Addam Hardy",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "400 east maple street, fayetteville, arkansas, 72701": {
+    "lat": 36.0700128,
+    "lng": -94.1528974,
+    "source": "osm",
+    "clientName": "Greg Herman",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "4318 south scissortail drive, rogers, arkansas, 72713": {
+    "lat": 36.295749,
+    "lng": -94.2364029,
+    "source": "osm",
+    "clientName": "Derick Bores",
+    "lastUpdated": "2025-09-05T21:44:00.000Z",
+    "radius": 120
+  },
+  "509 east maple street, fayetteville, arkansas, 72701": {
+    "lat": 36.0695711,
+    "lng": -94.1509584,
+    "source": "osm",
+    "clientName": "Kristi Simco",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "4897 west triangle street, fayetteville, arkansas, 72704": {
+    "lat": 36.0623671,
+    "lng": -94.2308219,
+    "source": "osm",
+    "clientName": "Ben Kirby",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "594 millsap road, fayetteville, arkansas, 72703": {
+    "lat": 36.115104,
+    "lng": -94.149608,
+    "source": "osm",
+    "clientName": "The Eye Center",
+    "lastUpdated": "2025-09-30T14:14:09.963Z",
+    "radius": 145,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "237 east millsap road, fayetteville, arkansas, 72703": {
+    "lat": 36.11352,
+    "lng": -94.153481,
+    "source": "osm",
+    "clientName": "Northpark Place, LLC. (237 E Millsap)",
+    "lastUpdated": "2025-09-30T14:10:17.497Z",
+    "radius": 200,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "3380 north wimberly drive, fayetteville, arkansas, 72703": {
+    "lat": 36.113013,
+    "lng": -94.154609,
+    "source": "osm",
+    "clientName": "Northpark Place, LLC. (NWA Pediatric)",
+    "lastUpdated": "2025-09-30T14:11:11.229Z",
+    "radius": 200,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "3206 east crestline place, fayetteville, arkansas, 72701": {
+    "lat": 36.0687889,
+    "lng": -94.1159172,
+    "source": "osm",
+    "clientName": "Corben Young",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "2953 east pebblestone drive, fayetteville, arkansas, 72701": {
+    "lat": 36.066809,
+    "lng": -94.119845,
+    "source": "osm",
+    "clientName": "Areta Moseley",
+    "lastUpdated": "2025-09-28T21:14:59.737Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1
+  },
+  "3039 east pebblestone drive, fayetteville, arkansas, 72701": {
+    "lat": 36.0675809,
+    "lng": -94.1184861,
+    "source": "osm",
+    "clientName": "Reid Armstrong",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "1734 kingsley circle, springdale, arkansas, 72764": {
+    "lat": 36.159094,
+    "lng": -94.111265,
+    "source": "pattern",
+    "clientName": "Avenue Electric Apartments",
+    "lastUpdated": "2025-10-06T21:08:37.289Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "southwest regional airport boulevard, bentonville, arkansas, 72712": {
+    "lat": 36.313476,
+    "lng": -94.30372,
+    "source": "osm",
+    "clientName": "Buffington Homes (Opal Park)",
+    "lastUpdated": "2025-09-29T16:14:11.645Z",
+    "radius": 200,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "62 west buckingham drive, rogers, arkansas, 72758": {
+    "lat": 36.3002341,
+    "lng": -94.1999242,
+    "source": "osm",
+    "clientName": "Floyd Hammond",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "1 west colonial drive, rogers, arkansas, 72758": {
+    "lat": 36.297483,
+    "lng": -94.190457,
+    "source": "osm",
+    "clientName": "Melissa & Floyd Ferjuste",
+    "lastUpdated": "2025-09-30T14:08:35.180Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "residential",
+    "isActive": true
+  },
+  "8 w. wimbledon way, rogers, arkansas, 72758": {
+    "lat": 36.2940627,
+    "lng": -94.2069896,
+    "source": "osm",
+    "clientName": "Randy Brucker",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "77 west champions boulevard, rogers, arkansas, 72758": {
+    "lat": 36.2963299,
+    "lng": -94.2022949,
+    "source": "osm",
+    "clientName": "Mark Martin (77 W Champions)",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "31 south windsor drive, rogers, arkansas, 72758": {
+    "lat": 36.3056311,
+    "lng": -94.1940961,
+    "source": "osm",
+    "clientName": "Joe Rheem",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "10 south plymouth lane, rogers, arkansas, 72758": {
+    "lat": 36.3044299,
+    "lng": -94.1996966,
+    "source": "osm",
+    "clientName": "Ross & Natalie Warnes",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "8 south plymouth lane, rogers, arkansas, 72758": {
+    "lat": 36.3041881,
+    "lng": -94.1992168,
+    "source": "osm",
+    "clientName": "Will & Megan Sawyer",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "6 w leiston dr, rogers, ar, 72758": {
+    "lat": 36.300426,
+    "lng": -94.193598,
+    "source": "osm",
+    "clientName": "Courtney and Aaron Jurgensmeyer",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "8 south shetland lane, rogers, arkansas, 72758": {
+    "lat": 36.3034216,
+    "lng": -94.2006109,
+    "source": "osm",
+    "clientName": "Jason Mowrey",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "4 west newhaven lane, rogers, arkansas, 72758": {
+    "lat": 36.3016889,
+    "lng": -94.2019101,
+    "source": "osm",
+    "clientName": "Jennifer Pleiman",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "26 west razorback road, rogers, arkansas, 72758": {
+    "lat": 36.292014,
+    "lng": -94.195042,
+    "source": "pattern",
+    "clientName": "Bob Wolf",
+    "lastUpdated": "2025-09-28T21:16:12.322Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1
+  },
+  "19 w nottingham ln, rogers, ar, 72758": {
+    "lat": 36.3066769,
+    "lng": -94.1984751,
+    "source": "osm",
+    "clientName": "Ingrid Bastos",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "11 west nottingham lane, rogers, arkansas, 72758": {
+    "lat": 36.3063595,
+    "lng": -94.1968061,
+    "source": "osm",
+    "clientName": "Patrick Byrd (Rogers)",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "4 south sherwood drive, rogers, arkansas, 72758": {
+    "lat": 36.3050439,
+    "lng": -94.1964044,
+    "source": "osm",
+    "clientName": "Mary Jernigan",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "14 south sherwood drive, rogers, arkansas, 72758": {
+    "lat": 36.3032439,
+    "lng": -94.1963931,
+    "source": "osm",
+    "clientName": "Tracy Mower",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "9 west oxford drive, rogers, ar, 72758": {
+    "lat": 36.303456,
+    "lng": -94.197879,
+    "source": "osm",
+    "clientName": "Amy Mohs",
+    "lastUpdated": "2025-09-28T21:14:19.773Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1
+  },
+  "17 w wimbledon way, rogers, ar, 72858": {
+    "lat": 36.2962587,
+    "lng": -94.2074499,
+    "source": "osm",
+    "clientName": "Blake Burns",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "116 west champions boulevard, rogers, arkansas, 72758": {
+    "lat": 36.2962026,
+    "lng": -94.2109476,
+    "source": "osm",
+    "clientName": "Kyle Kuykendall",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "3 south shetland lane, rogers, arkansas, 72758": {
+    "lat": 36.303401,
+    "lng": -94.1992246,
+    "source": "osm",
+    "clientName": "Robin Most",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "501 southwest 20th street, bentonville, arkansas, 72712": {
+    "lat": 36.348815,
+    "lng": -94.217567,
+    "source": "osm",
+    "clientName": "Asset Living (Touchstone Village)",
+    "lastUpdated": "2025-09-29T16:12:27.729Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "2307 southeast b street, bentonville, arkansas, 72712": {
+    "lat": 36.347077,
+    "lng": -94.207356,
+    "source": "osm",
+    "clientName": "Brian Clark (2307 SE B)",
+    "lastUpdated": "2025-09-29T16:13:42.110Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "109 southeast 22nd street, bentonville, arkansas, 72712": {
+    "lat": 36.347976,
+    "lng": -94.20951,
+    "source": "osm",
+    "clientName": "Brian Clark (109 SE 22nd)",
+    "lastUpdated": "2025-09-29T16:13:33.033Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "105 southeast 22nd street, bentonville, arkansas, 72712": {
+    "lat": 36.347792,
+    "lng": -94.208102,
+    "source": "osm",
+    "clientName": "Brian Clark (105 SE 22nd)",
+    "lastUpdated": "2025-09-29T16:12:56.826Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "68 west champions boulevard, rogers, arkansas, 72758": {
+    "lat": 36.295602,
+    "lng": -94.2017022,
+    "source": "osm",
+    "clientName": "Chad Klutts",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "41 holly drive, bentonville, arkansas, 72712": {
+    "lat": 36.3925352,
+    "lng": -94.206473,
+    "source": "osm",
+    "clientName": "Ted Brock",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "21 south mission hills circle, rogers, ar, 72758": {
+    "lat": 36.2967154,
+    "lng": -94.2033325,
+    "source": "osm",
+    "clientName": "Nate Green",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "2 west razorback road, rogers, arkansas, 72758": {
+    "lat": 36.293129,
+    "lng": -94.191147,
+    "source": "corrected",
+    "clientName": "Matt Cameron",
+    "lastUpdated": "2025-10-02T19:50:14.940Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "residential",
+    "isActive": true
+  },
+  "2700 southeast s street, bentonville, arkansas, 72712": {
+    "lat": 36.342952,
+    "lng": -94.189223,
+    "source": "osm",
+    "clientName": "CrossMar Investments (Trailside)",
+    "lastUpdated": "2025-09-30T03:10:26.869Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "1001 south 52nd street, rogers, arkansas, 72758": {
+    "lat": 36.323286,
+    "lng": -94.186258,
+    "source": "osm",
+    "clientName": "John Schulte (Mach 1)",
+    "lastUpdated": "2025-09-30T03:12:34.267Z",
+    "radius": 122,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "1106 shaver street, springdale, arkansas, 72762": {
+    "lat": 36.176161,
+    "lng": -94.170818,
+    "source": "osm",
+    "clientName": "Brian Clark (Shaver St)",
+    "lastUpdated": "2025-09-29T16:14:02.007Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "southwest gypsum avenue, bentonville, arkansas, 72712": {
+    "lat": 36.337084,
+    "lng": -94.28025,
+    "source": "osm",
+    "clientName": "StoneRidge Phase 2",
+    "lastUpdated": "2025-10-01T22:05:44.801Z",
+    "radius": 488,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "8811 west starry night drive, bentonville, arkansas, 72713": {
+    "lat": 36.299506,
+    "lng": -94.24352,
+    "source": "pattern",
+    "clientName": "Brandon Smith",
+    "lastUpdated": "2025-09-30T02:29:32.262Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "residential",
+    "isActive": true
+  },
+  "1210 north 54th avenue, fayetteville, arkansas, 72704": {
+    "lat": 36.080897,
+    "lng": -94.238036,
+    "source": "manual",
+    "clientName": "Cobblestone Farms",
+    "lastUpdated": "2025-09-30T03:11:47.834Z",
+    "priority": 1,
+    "radius": 300,
+    "note": "Updated with actual GPS coordinates from vehicle tracking - large property",
+    "isClient": true,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "96 west champions boulevard, rogers, arkansas, 72758": {
+    "lat": 36.296292,
+    "lng": -94.205402,
+    "source": "osm",
+    "clientName": "Chris & Becky Hand",
+    "lastUpdated": "2025-09-29T16:18:36.627Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "residential",
+    "isActive": false
+  },
+  "53 w buckingham dr, rogers, arkansas, 72758": {
+    "lat": 36.3019429,
+    "lng": -94.1981075,
+    "source": "osm",
+    "clientName": "John Paul Naudo",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "3 s sherwood dr, rogers, ar, 72758": {
+    "lat": 36.3050371,
+    "lng": -94.1957486,
+    "source": "osm",
+    "clientName": "Susan Nilsen",
+    "lastUpdated": "2025-09-28T17:41:34.669Z",
+    "radius": 100
+  },
+  "3708 south 38th street, rogers, arkansas, 72758": {
+    "lat": 36.273066,
+    "lng": -94.169952,
+    "source": "osm",
+    "clientName": "Asset Living (Hawthorne Grove)",
+    "lastUpdated": "2025-09-29T16:11:59.454Z",
+    "radius": 100,
+    "isClient": true,
+    "priority": 1,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "23 west nottingham lane, rogers, arkansas, 72758": {
+    "lat": 36.306449,
+    "lng": -94.199325,
+    "source": "manual",
+    "clientName": "Billy and Shelby Courtney",
+    "lastUpdated": "2025-09-05T22:00:00.000Z",
+    "priority": 1,
+    "radius": 75,
+    "note": "Exact GPS coordinates from vehicle tracking - residential precision required"
+  },
+  "650 south dodson road, rogers, arkansas, 72758": {
+    "lat": 36.329173,
+    "lng": -94.200186,
+    "source": "manual",
+    "clientName": "Primrose Retirement",
+    "lastUpdated": "2025-09-30T02:51:06.780Z",
+    "priority": 1,
+    "radius": 200,
+    "note": "Exact GPS coordinates from vehicle tracking - commercial/institutional property",
+    "isClient": true,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "lowe's springdale": {
+    "lat": 36.174159,
+    "lng": -94.177152,
+    "source": "api",
+    "clientName": "Lowe's Springdale",
+    "lastUpdated": "2025-09-29T15:58:43.803Z",
+    "priority": 0,
+    "radius": 100,
+    "isClient": false,
+    "clientType": "other",
+    "isActive": false
+  },
+  "e anthracite st, siloam springs, ar, usa": {
+    "lat": 36.175704,
+    "lng": -94.502848,
+    "source": "api",
+    "clientName": "StoneRidge Siloam Springs",
+    "lastUpdated": "2025-09-30T14:12:59.778Z",
+    "priority": 1,
+    "radius": 100,
+    "isClient": true,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "garden city nursery": {
+    "lat": 36.349875,
+    "lng": -94.210146,
+    "source": "api",
+    "clientName": "Garden City Nursery",
+    "lastUpdated": "2025-10-04T19:16:49.721Z",
+    "priority": 0,
+    "radius": 100,
+    "isClient": false,
+    "clientType": "other",
+    "isActive": false
+  },
+  "beaver water district, n primrose rd, lowell, ar, usa": {
+    "lat": 36.258212,
+    "lng": -94.105243,
+    "source": "api",
+    "clientName": "Beaver Water District",
+    "lastUpdated": "2025-10-06T20:58:20.993Z",
+    "priority": 1,
+    "radius": 305,
+    "isClient": true,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "sharum's garden center nwa, south maestri road, springdale, ar, usa": {
+    "lat": 36.167457,
+    "lng": -94.212079,
+    "source": "api",
+    "clientName": "Sharum's Garden Center",
+    "lastUpdated": "2025-09-29T16:05:27.680Z",
+    "priority": 0,
+    "radius": 100,
+    "isClient": false,
+    "clientType": "other",
+    "isActive": false
+  },
+  "maverik, west pleasant grove road, rogers, ar, usa": {
+    "lat": 36.287595,
+    "lng": -94.189106,
+    "source": "api",
+    "clientName": "Maverik Gas Station",
+    "lastUpdated": "2025-09-29T16:11:35.235Z",
+    "priority": 0,
+    "radius": 152,
+    "isClient": false,
+    "clientType": "other",
+    "isActive": false
+  },
+  "maverik, north college avenue, fayetteville, ar, usa": {
+    "lat": 36.094377,
+    "lng": -94.152255,
+    "source": "api",
+    "clientName": "Maverik",
+    "lastUpdated": "2025-09-30T15:43:00.810Z",
+    "priority": 0,
+    "radius": 130,
+    "isClient": false,
+    "clientType": "other",
+    "isActive": false
+  },
+  "the hardware store, west township street, fayetteville, ar, usa": {
+    "lat": 36.095069,
+    "lng": -94.15802,
+    "source": "api",
+    "clientName": "The Hardware Store",
+    "lastUpdated": "2025-10-01T20:38:32.443Z",
+    "priority": 0,
+    "radius": 101,
+    "isClient": false,
+    "clientType": "other",
+    "isActive": false
+  },
+  "coler crossing, north walton boulevard, bentonville, ar, usa": {
+    "lat": 36.374535,
+    "lng": -94.220598,
+    "source": "api",
+    "clientName": "Coler Crossing",
+    "lastUpdated": "2025-10-03T20:10:50.741Z",
+    "priority": 1,
+    "radius": 137,
+    "isClient": true,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "hondurans house (36.206523, -94.114346)": {
+    "lat": 36.206523,
+    "lng": -94.114346,
+    "source": "api",
+    "clientName": "Hondurans House",
+    "lastUpdated": "2025-10-04T16:39:04.583Z",
+    "priority": 1,
+    "radius": 122,
+    "isClient": true,
+    "clientType": "residential",
+    "isActive": true
+  },
+  "541 east robinson avenue, springdale, ar, usa": {
+    "lat": 36.166254,
+    "lng": -94.126133,
+    "source": "api",
+    "clientName": "Pepsi Building",
+    "lastUpdated": "2025-10-07T15:59:45.139Z",
+    "priority": 1,
+    "radius": 183,
+    "isClient": true,
+    "clientType": "commercial",
+    "isActive": true
+  },
+  "westwood gardens, west new hope road, rogers, ar, usa": {
+    "lat": 36.312484,
+    "lng": -94.169677,
+    "source": "api",
+    "clientName": "Westwood Gardens",
+    "lastUpdated": "2025-10-07T16:14:45.690Z",
+    "priority": 0,
+    "radius": 152,
+    "isClient": false,
+    "clientType": "other",
+    "isActive": false
+  },
+  "big emma apartments, east emma avenue, springdale, ar, usa": {
+    "lat": 36.184313,
+    "lng": -94.123712,
+    "source": "api",
+    "clientName": "Big Emma Apartments",
+    "lastUpdated": "2025-10-07T19:11:27.439Z",
+    "priority": 1,
+    "radius": 126,
+    "isClient": true,
+    "clientType": "commercial",
+    "isActive": true
+  }
+}
