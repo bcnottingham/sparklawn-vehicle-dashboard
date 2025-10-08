@@ -482,28 +482,27 @@
                 padding: 12px;
             }
 
-            /* Make filter buttons wrap or scroll */
+            /* Hide filter buttons on mobile, show only counts */
             .section > div:first-of-type {
                 margin-bottom: 12px;
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px !important;
             }
 
             .section > div:first-of-type button {
-                flex: 1 1 calc(50% - 4px);
-                min-width: 140px;
-                padding: 10px 12px !important;
-                font-size: 13px !important;
-                white-space: nowrap;
+                display: none !important;
             }
 
-            /* Legend should wrap on mobile */
+            /* Show only counts legend - make it prominent */
             #countsLegend {
-                flex-basis: 100%;
-                margin-top: 8px;
+                display: block !important;
+                width: 100%;
                 text-align: center;
-                font-size: 11px !important;
+                font-size: 13px !important;
+                color: #10b981 !important;
+                padding: 12px;
+                background: #0f1419;
+                border-radius: 8px;
+                border: 1px solid #2a3441;
+                margin: 0 !important;
             }
 
             /* Search bar */
