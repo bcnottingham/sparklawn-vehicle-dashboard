@@ -462,35 +462,147 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 0;
+            }
+
+            .header {
+                padding: 16px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .section {
+                padding: 12px;
+            }
+
+            /* Make filter buttons wrap or scroll */
+            .section > div:first-of-type {
+                margin-bottom: 12px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px !important;
+            }
+
+            .section > div:first-of-type button {
+                flex: 1 1 calc(50% - 4px);
+                min-width: 140px;
+                padding: 10px 12px !important;
+                font-size: 13px !important;
+                white-space: nowrap;
+            }
+
+            /* Legend should wrap on mobile */
+            #countsLegend {
+                flex-basis: 100%;
+                margin-top: 8px;
+                text-align: center;
+                font-size: 11px !important;
+            }
+
+            /* Search bar */
+            #clientSearch {
+                font-size: 16px; /* Prevent zoom on iOS */
+                max-width: 100% !important;
+            }
+
+            /* Convert table to card layout */
+            .clients-table {
+                border: 0;
+            }
+
+            .clients-table thead {
+                display: none;
+            }
+
+            .clients-table tbody {
+                display: block;
+            }
+
+            .clients-table tr {
+                display: block;
+                margin-bottom: 16px;
+                background: #0f1419;
+                border: 1px solid #2a3441;
+                border-radius: 8px;
+                padding: 12px;
+                border-left: 4px solid #10b981;
+            }
+
+            .clients-table td {
+                display: block;
+                text-align: left;
+                padding: 6px 0;
+                border-bottom: none;
+            }
+
+            .clients-table td:before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #94a3b8;
+                font-size: 11px;
+                text-transform: uppercase;
+                display: block;
+                margin-bottom: 4px;
+            }
+
+            .clients-table td:first-child {
+                font-size: 16px;
+                font-weight: 700;
+                color: #10b981;
+                padding-bottom: 8px;
+                border-bottom: 1px solid #2a3441;
+                margin-bottom: 8px;
+            }
+
+            .clients-table td:first-child:before {
+                display: none;
+            }
+
+            .action-buttons {
+                flex-direction: row;
+                gap: 8px;
+                margin-top: 12px;
+            }
+
+            .action-buttons button {
+                flex: 1;
+                padding: 10px !important;
+                font-size: 13px !important;
+            }
+
+            /* Form adjustments */
             .form-row {
                 grid-template-columns: 1fr;
             }
 
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            #clientSearch {
-                font-size: 16px; /* Prevent zoom on iOS */
-            }
-
-            /* Compact form mobile layout */
             #addClientForm > div:first-child {
                 grid-template-columns: 1fr !important;
             }
 
             #addClientForm > div:nth-child(2) {
-                grid-template-columns: auto auto !important;
-                gap: 12px !important;
+                grid-template-columns: 1fr !important;
+                gap: 8px !important;
             }
 
-            #addClientForm > div:nth-child(2) select {
-                grid-column: 1 / -1 !important;
-            }
-
-            #addClientForm > div:nth-child(2) input[readonly] {
+            #addClientForm > div:nth-child(2) > * {
                 grid-column: 1 / -1 !important;
                 width: 100% !important;
+            }
+
+            #addClientForm > div:nth-child(2) label {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px;
+                background: #0f1419;
+                border-radius: 6px;
             }
         }
 
@@ -824,14 +936,14 @@
                 }
 
                 row.innerHTML = `
-                    <td><strong><a href="#" onclick="previewLocation(${client.lat}, ${client.lng}, '${escapedClientName}'); return false;" style="color: #10b981; text-decoration: none; cursor: pointer;">${client.clientName}</a></strong></td>
-                    <td>${formatAddress(client.address)}</td>
-                    <td>${client.lat && client.lng ? `${client.lat.toFixed(6)}, ${client.lng.toFixed(6)}` : 'Not geocoded'}</td>
-                    <td>${Math.round(client.radius * 3.28084)}ft</td>
-                    <td>${new Date(client.lastUpdated).toLocaleDateString()}</td>
-                    <td>${typeLabel}</td>
-                    <td><span style="color: #94a3b8; font-size: 12px;">${propertyIcon} ${propertyLabel}</span></td>
-                    <td>
+                    <td data-label="Location"><strong><a href="#" onclick="previewLocation(${client.lat}, ${client.lng}, '${escapedClientName}'); return false;" style="color: #10b981; text-decoration: none; cursor: pointer;">${client.clientName}</a></strong></td>
+                    <td data-label="Address">${formatAddress(client.address)}</td>
+                    <td data-label="Coordinates">${client.lat && client.lng ? `${client.lat.toFixed(6)}, ${client.lng.toFixed(6)}` : 'Not geocoded'}</td>
+                    <td data-label="Radius">${Math.round(client.radius * 3.28084)}ft</td>
+                    <td data-label="Updated">${new Date(client.lastUpdated).toLocaleDateString()}</td>
+                    <td data-label="Type">${typeLabel}</td>
+                    <td data-label="Property"><span style="color: #94a3b8; font-size: 12px;">${propertyIcon} ${propertyLabel}</span></td>
+                    <td data-label="Actions">
                         <div class="action-buttons">
                             <button class="btn btn-secondary" onclick="editLocation('${escapedAddress}', '${escapedClientName}', ${client.lat}, ${client.lng}, ${client.radius}, ${isClient}, '${client.clientType || 'residential'}', ${client.isActive !== false})">Edit</button>
                             <button class="btn btn-danger" onclick="deleteLocation('${escapedAddress}', '${escapedClientName}')">Delete</button>
