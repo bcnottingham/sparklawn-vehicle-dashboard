@@ -61,3 +61,5 @@ mongodb-macos-*/
 
 # Generated documentation (keep in repo, but exclude from builds)
 # PRODUCTION_CLEANUP_REPORT.md is for reference
+vercel-test/
+mongodb-macos-*.tgz

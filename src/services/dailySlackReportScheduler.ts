@@ -17,11 +17,24 @@ class DailySlackReportScheduler {
      * Start the daily report scheduler
      * Runs every day at 7:00 PM CST
      */
-    start(): void {
+    async start(): Promise<void> {
         if (!slackService.isConfigured()) {
             console.log('⏭️ Slack not configured - daily report scheduler disabled');
             console.log('   Set SLACK_WEBHOOK_URL in .env to enable automated Slack reports');
             return;
+        }
+
+        // Initialize TTL index for report locks (auto-delete after expiry)
+        try {
+            const { getDatabase } = await import('../db/index');
+            const db = await getDatabase();
+            await db.collection('report_locks').createIndex(
+                { expiresAt: 1 },
+                { expireAfterSeconds: 0 }
+            );
+            console.log('✅ Report locks TTL index created');
+        } catch (error) {
+            console.error('❌ Failed to create report locks index:', error);
         }
 
         // Run every day at 7:00 PM CST (19:00)
@@ -62,6 +75,35 @@ class DailySlackReportScheduler {
 
             console.log(`📊 Generating daily Slack report for ${reportDate}...`);
 
+            // Distributed lock: Prevent duplicate reports if multiple instances are running
+            const { getDatabase } = await import('../db/index');
+            const db = await getDatabase();
+            const locksCollection = db.collection<{
+                _id: string;
+                acquiredAt: Date;
+                expiresAt: Date;
+            }>('report_locks');
+
+            const lockKey = `slack_report_${reportDate}`;
+            const lockExpiry = new Date(Date.now() + 60000); // Lock expires in 1 minute
+
+            try {
+                // Try to acquire lock
+                await locksCollection.insertOne({
+                    _id: lockKey,
+                    acquiredAt: new Date(),
+                    expiresAt: lockExpiry
+                });
+                console.log(`🔒 Acquired report lock for ${reportDate}`);
+            } catch (error: any) {
+                if (error.code === 11000) {
+                    // Duplicate key error - another instance already sent the report
+                    console.log(`⏭️ Report for ${reportDate} already sent by another instance`);
+                    return;
+                }
+                throw error;
+            }
+
             // Generate PDF report
             console.log(`📄 Generating PDF report for ${reportDate}...`);
             const pdfFilename = await pdfReportService.generateDailyReportPDF(reportDate);
@@ -85,6 +127,10 @@ class DailySlackReportScheduler {
             } else {
                 console.error(`❌ Failed to send daily Slack report for ${reportDate}`);
             }
+
+            // Release lock after successful send
+            await locksCollection.deleteOne({ _id: lockKey });
+            console.log(`🔓 Released report lock for ${reportDate}`);
 
         } catch (error) {
             console.error('❌ Error sending daily Slack report:', error);

@@ -232,7 +232,7 @@ class SlackService {
                 channel_id: this.channelId,
                 file: fs.createReadStream(filePath),
                 filename: fileName,
-                initial_comment: initialComment,
+                initial_comment: initialComment || undefined,
             });
 
             if (result.ok) {

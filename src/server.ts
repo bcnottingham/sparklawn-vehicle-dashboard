@@ -491,8 +491,8 @@ async function startServer() {
     // Initialize daily reports service first
     await dailyReportsService.initialize();
 
-    // Start scheduler
-    dailySlackReportScheduler.start();
+    // Start scheduler (now async to create TTL index)
+    await dailySlackReportScheduler.start();
 
     // Test endpoint to manually trigger a Slack report
     app.post('/api/slack/test-report', async (req, res) => {
