@@ -1005,6 +1005,17 @@
 
         function getCachedReport() {
             try {
+                // Never use cache for today's date (data is live and changing)
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const checkDate = new Date(currentDate);
+                checkDate.setHours(0, 0, 0, 0);
+
+                if (checkDate.getTime() === today.getTime()) {
+                    console.log('⏭️ Skipping cache for today - fetching live data');
+                    return null;
+                }
+
                 const cached = localStorage.getItem(getCacheKey(currentDate));
                 if (cached) {
                     const data = JSON.parse(cached);
@@ -1028,6 +1039,17 @@
 
         function cacheReport(reportHTML) {
             try {
+                // Don't cache today's data (it's constantly changing)
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const checkDate = new Date(currentDate);
+                checkDate.setHours(0, 0, 0, 0);
+
+                if (checkDate.getTime() === today.getTime()) {
+                    console.log('⏭️ Not caching today\'s report (live data)');
+                    return;
+                }
+
                 const cacheData = {
                     timestamp: new Date().toISOString(),
                     report: reportHTML
