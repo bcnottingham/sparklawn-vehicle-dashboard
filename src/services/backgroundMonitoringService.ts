@@ -94,11 +94,11 @@ export class BackgroundMonitoringService {
 
     // New state management with MongoDB as single source of truth
     private stateDerivationInterval: NodeJS.Timeout | null = null;
-    private readonly STATE_DERIVATION_INTERVAL_BUSINESS_HOURS = 5 * 1000; // 5 seconds during business hours
+    private readonly STATE_DERIVATION_INTERVAL_BUSINESS_HOURS = 10 * 1000; // 10 seconds during business hours (reduced from 5s to lower MongoDB load)
     private readonly STATE_DERIVATION_INTERVAL_OFF_HOURS = 10 * 60 * 1000; // 10 minutes off-hours
 
     // Configuration - GPS noise filtering and realistic trip detection
-    private readonly MONITORING_INTERVAL_BUSINESS_HOURS = 5 * 1000; // 5 seconds during business hours (6am-9pm CST)
+    private readonly MONITORING_INTERVAL_BUSINESS_HOURS = 10 * 1000; // 10 seconds during business hours (6am-9pm CST) - reduced from 5s to lower MongoDB load
     private readonly MONITORING_INTERVAL_OFF_HOURS = 10 * 60 * 1000; // 10 minutes off-hours (9pm-6am CST)
     private readonly BUSINESS_HOURS_START = 6; // 6am CST
     private readonly BUSINESS_HOURS_END = 21; // 9pm CST

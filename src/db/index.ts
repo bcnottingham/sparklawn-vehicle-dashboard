@@ -47,10 +47,10 @@ class MongoDBConnection {
         const uri = this.getConnectionString();
         
         const client = new MongoClient(uri, {
-            // Connection Pool Configuration
-            maxPoolSize: 10,
-            minPoolSize: 5,
-            maxIdleTimeMS: 30000,
+            // Connection Pool Configuration - Reduced to prevent exhaustion
+            maxPoolSize: 5,        // Reduced from 10 to 5
+            minPoolSize: 2,        // Reduced from 5 to 2
+            maxIdleTimeMS: 60000,  // Increased from 30s to 60s to keep connections alive longer
 
             // Timeout Configuration - Increased for Atlas Cloud
             serverSelectionTimeoutMS: 30000,  // Increased from 10s to 30s
