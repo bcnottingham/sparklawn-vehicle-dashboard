@@ -104,33 +104,39 @@ class DailySlackReportScheduler {
                 throw error;
             }
 
-            // Generate PDF report
-            console.log(`📄 Generating PDF report for ${reportDate}...`);
-            const pdfFilename = await pdfReportService.generateDailyReportPDF(reportDate);
-            const pdfFilePath = path.join(__dirname, '../../public/reports', pdfFilename);
+            try {
+                // Generate PDF report
+                console.log(`📄 Generating PDF report for ${reportDate}...`);
+                const pdfFilename = await pdfReportService.generateDailyReportPDF(reportDate);
+                const pdfFilePath = path.join(__dirname, '../../public/reports', pdfFilename);
 
-            // Format date for display
-            const formattedDate = moment.tz(reportDate, this.timezone).format('dddd, MMMM DD, YYYY');
+                // Format date for display
+                const formattedDate = moment.tz(reportDate, this.timezone).format('dddd, MMMM DD, YYYY');
 
-            // Upload PDF to Slack - title only, no summary message
-            const titleMessage = `📊 *Daily Fleet Report - ${formattedDate}*`;
+                // Upload PDF to Slack - title only, no summary message
+                const titleMessage = `📊 *Daily Fleet Report - ${formattedDate}*`;
 
-            console.log(`📤 Uploading PDF report to Slack...`);
-            const uploaded = await slackService.uploadFile(
-                pdfFilePath,
-                titleMessage,
-                `Daily Fleet Report - ${formattedDate}`
-            );
+                console.log(`📤 Uploading PDF report to Slack...`);
+                const uploaded = await slackService.uploadFile(
+                    pdfFilePath,
+                    titleMessage,
+                    `Daily Fleet Report - ${formattedDate}`
+                );
 
-            if (uploaded) {
-                console.log(`✅ Daily Slack report sent successfully for ${reportDate}`);
-            } else {
-                console.error(`❌ Failed to send daily Slack report for ${reportDate}`);
+                if (uploaded) {
+                    console.log(`✅ Daily Slack report sent successfully for ${reportDate}`);
+                } else {
+                    console.error(`❌ Failed to send daily Slack report for ${reportDate}`);
+                }
+            } finally {
+                // ALWAYS release lock, even if report fails
+                try {
+                    await locksCollection.deleteOne({ _id: lockKey });
+                    console.log(`🔓 Released report lock for ${reportDate}`);
+                } catch (lockError) {
+                    console.error(`⚠️ Failed to release lock for ${reportDate}:`, lockError);
+                }
             }
-
-            // Release lock after successful send
-            await locksCollection.deleteOne({ _id: lockKey });
-            console.log(`🔓 Released report lock for ${reportDate}`);
 
         } catch (error) {
             console.error('❌ Error sending daily Slack report:', error);
