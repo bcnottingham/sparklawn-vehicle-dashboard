@@ -2130,7 +2130,7 @@ export class BackgroundMonitoringService {
             const changeDetection = await smartLogger.shouldStoreSignal(signal);
 
             if (changeDetection.shouldStore) {
-                await smartLogger.storeSignalWithSmartTTL(signal, changeDetection.storageCategory);
+                await smartLogger.storeSignalWithSmartTTL(signal, changeDetection.storageCategory, changeDetection.changeReasons);
                 console.log(`🧠 Smart stored ${vin}: ${changeDetection.storageCategory} (${changeDetection.changeReasons.join(', ')})`);
             } else {
                 console.log(`📤 Skipped storing ${vin}: no significant changes`);

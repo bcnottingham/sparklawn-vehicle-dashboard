@@ -105,7 +105,8 @@ export class SmartLogger {
      */
     async storeSignalWithSmartTTL(
         signal: TelematicsSignal,
-        category: 'critical' | 'important' | 'routine' | 'skip'
+        category: 'critical' | 'important' | 'routine' | 'skip',
+        reasons: string[] = []
     ): Promise<void> {
         if (category === 'skip') return;
 
@@ -136,7 +137,7 @@ export class SmartLogger {
 
         await db.collection(collectionName).insertOne(enhancedSignal);
 
-        console.log(`📊 Smart logged ${signal.vin}: ${category} (reasons: ${enhancedSignal.storageCategory})`);
+        console.log(`📊 Smart logged ${signal.vin}: ${category} (reasons: ${reasons.join(', ')})`);
     }
 
     /**
