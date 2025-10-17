@@ -25,34 +25,34 @@ export class PropertyMatchingService {
   private initialized = false;
 
   /**
-   * Initialize the service by loading client location data
+   * Initialize the service by loading client location data from MongoDB
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
     try {
-      // Load from cached client coordinates file
-      const cacheFilePath = path.join(
-        __dirname,
-        '../../../sparklawn-website-manager/client-coordinates-cache.json'
-      );
+      // Load from MongoDB
+      const { getDatabase } = await import('../db/index');
+      const db = await getDatabase();
+      const collection = db.collection('client_locations');
 
-      if (fs.existsSync(cacheFilePath)) {
-        const cachedData = JSON.parse(fs.readFileSync(cacheFilePath, 'utf8'));
+      const clientDocs = await collection.find({}).toArray();
 
-        for (const [address, data] of Object.entries<any>(cachedData)) {
-          this.clientLocations.set(address.toLowerCase(), {
-            clientName: data.clientName,
-            address: address,
-            lat: data.lat,
-            lng: data.lng
+      if (clientDocs.length > 0) {
+        for (const doc of clientDocs) {
+          const address = (doc._id as string).toLowerCase();
+          this.clientLocations.set(address, {
+            clientName: (doc as any).clientName,
+            address: doc._id as string,
+            lat: (doc as any).lat,
+            lng: (doc as any).lng
           });
         }
 
-        console.log(`✅ Property matching initialized with ${this.clientLocations.size} client locations`);
+        console.log(`✅ Property matching initialized with ${this.clientLocations.size} client locations from MongoDB`);
         this.initialized = true;
       } else {
-        console.warn('⚠️ Client coordinates cache not found');
+        console.warn('⚠️ No client locations found in MongoDB');
       }
     } catch (error) {
       console.error('❌ Failed to initialize property matching:', error);
