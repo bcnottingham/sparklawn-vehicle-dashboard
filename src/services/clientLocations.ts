@@ -42,38 +42,82 @@ class ClientLocationService {
     }
 
     private async initializeClientLocations() {
-        console.log('🏗️ Initializing SparkLawn client locations from cached data...');
-        
+        console.log('🏗️ Initializing SparkLawn client locations from MongoDB...');
+
         try {
-            // First try to load from cached client coordinates file
-            const cacheFilePath = path.join(__dirname, '../../client-coordinates-cache.json');
+            // Try to load from MongoDB first
+            const { getDatabase } = await import('../db/index');
+            const db = await getDatabase();
+            const collection = db.collection('client_locations');
 
-            console.log(`🔍 Looking for cache file at: ${cacheFilePath}`);
-            console.log(`🔍 Cache file exists: ${fs.existsSync(cacheFilePath)}`);
+            const clientDocs = await collection.find({}).toArray();
 
-            if (fs.existsSync(cacheFilePath)) {
-                console.log('📁 Loading client data from cache file...');
-                const cachedData = JSON.parse(fs.readFileSync(cacheFilePath, 'utf8'));
-                
-                this.clientLocations = Object.entries(cachedData).map(([address, data]: [string, any]) => ({
-                    client: data.clientName,
+            if (clientDocs.length > 0) {
+                console.log(`📊 Fetched ${clientDocs.length} locations from MongoDB`);
+
+                this.clientLocations = clientDocs.map((doc: any) => ({
+                    client: doc.clientName,
                     job: 'Property Service',
-                    address: address,
-                    lat: data.lat,
-                    lng: data.lng,
-                    radius: this.getReasonableRadius(data.clientName, data.radius), // Use intelligent radius
+                    address: doc._id,
+                    lat: doc.lat,
+                    lng: doc.lng,
+                    radius: this.getReasonableRadius(doc.clientName, doc.radius),
                     type: 'client_job_site' as const
                 }));
 
-                console.log(`✅ Loaded ${this.clientLocations.length} client locations from cache`);
+                console.log(`✅ Loaded ${this.clientLocations.length} client locations from MongoDB`);
                 return;
             }
-            
+
+            console.log('⚠️ No locations in MongoDB, checking legacy file cache...');
+
+            // Fallback: Check legacy file cache and migrate if found
+            const cacheFilePath = path.join(__dirname, '../../client-coordinates-cache.json');
+
+            if (fs.existsSync(cacheFilePath)) {
+                console.log('📁 Found legacy cache file, migrating to MongoDB...');
+                const cachedData = JSON.parse(fs.readFileSync(cacheFilePath, 'utf8'));
+
+                // Migrate to MongoDB
+                const docsToInsert = Object.entries(cachedData).map(([address, data]: [string, any]) => ({
+                    _id: address,
+                    address: address,
+                    lat: data.lat,
+                    lng: data.lng,
+                    source: data.source || 'legacy',
+                    clientName: data.clientName,
+                    lastUpdated: data.lastUpdated || new Date().toISOString(),
+                    priority: data.priority || 1,
+                    radius: data.radius || 100,
+                    isClient: data.isClient !== false,
+                    clientType: data.clientType || 'residential',
+                    isActive: data.isActive !== false
+                }));
+
+                if (docsToInsert.length > 0) {
+                    await collection.insertMany(docsToInsert);
+                    console.log(`✅ Migrated ${docsToInsert.length} locations from legacy cache to MongoDB`);
+                }
+
+                this.clientLocations = docsToInsert.map(doc => ({
+                    client: doc.clientName,
+                    job: 'Property Service',
+                    address: doc.address,
+                    lat: doc.lat,
+                    lng: doc.lng,
+                    radius: this.getReasonableRadius(doc.clientName, doc.radius),
+                    type: 'client_job_site' as const
+                }));
+
+                console.log(`✅ Loaded ${this.clientLocations.length} client locations after migration`);
+                return;
+            }
+
             // Fallback: Try Jobber API
-            console.log('⏳ Cache not found, trying Jobber API...');
+            console.log('⏳ No cache found, trying Jobber API...');
             const properties = await jobberClient.getAllProperties();
             console.log(`📊 Fetched ${properties.length} properties from Jobber API`);
-            
+
             this.clientLocations = properties.map(property => ({
                 client: property.client.companyName || `${property.client.firstName} ${property.client.lastName}`,
                 job: 'Property Service',
@@ -85,10 +129,10 @@ class ClientLocationService {
             }));
 
             console.log(`✅ Loaded ${this.clientLocations.length} client locations from Jobber API`);
-            
+
         } catch (error) {
-            console.warn('⚠️ Failed to fetch from cache and API, falling back to minimal hardcoded locations:', error);
-            
+            console.warn('⚠️ Failed to fetch from MongoDB and API, falling back to minimal hardcoded locations:', error);
+
             // Last resort fallback to hardcoded locations
             const hardcodedLocations = [
                 { client: 'Shiloh Museum of Ozark History', job: 'Weekly Mowing Maintenance', address: '118 West Johnson Ave, Springdale, AR 72764', lat: 36.1873, lng: -94.13121, radius: 100 },

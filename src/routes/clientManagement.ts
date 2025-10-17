@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { geocodingService } from '../services/geocoding';
+import { getDatabase } from '../db/index';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -22,21 +23,33 @@ interface ClientCache {
     [address: string]: ClientCacheEntry;
 }
 
+interface ClientLocationDocument extends ClientCacheEntry {
+    _id: string; // MongoDB uses address as _id
+    address: string;
+}
+
 const CACHE_FILE_PATH = path.join(__dirname, '../../client-coordinates-cache.json');
 
 // GET /api/clients - List all clients
 router.get('/', async (req, res) => {
     try {
-        if (!fs.existsSync(CACHE_FILE_PATH)) {
-            return res.status(404).json({ error: 'Client cache not found' });
-        }
+        const db = await getDatabase();
+        const collection = db.collection<ClientLocationDocument>('client_locations');
 
-        const cacheData: ClientCache = JSON.parse(fs.readFileSync(CACHE_FILE_PATH, 'utf8'));
-        const clients = Object.entries(cacheData).map(([address, data]) => ({
-            address,
-            ...data,
-            // Apply intelligent radius for legacy records without radius
-            radius: data.radius || getIntelligentRadius(data.clientName, address)
+        const clientDocs = await collection.find({}).toArray();
+
+        const clients = clientDocs.map(doc => ({
+            address: doc._id,
+            lat: doc.lat,
+            lng: doc.lng,
+            source: doc.source,
+            clientName: doc.clientName,
+            lastUpdated: doc.lastUpdated,
+            priority: doc.priority,
+            radius: doc.radius || getIntelligentRadius(doc.clientName, doc._id),
+            isClient: doc.isClient !== false,
+            clientType: doc.clientType || 'residential',
+            isActive: doc.isActive !== false
         }));
 
         res.json({
@@ -67,18 +80,16 @@ router.post('/', async (req, res) => {
             });
         }
 
-        // Load existing cache
-        let cacheData: ClientCache = {};
-        if (fs.existsSync(CACHE_FILE_PATH)) {
-            cacheData = JSON.parse(fs.readFileSync(CACHE_FILE_PATH, 'utf8'));
-        }
+        const db = await getDatabase();
+        const collection = db.collection<ClientLocationDocument>('client_locations');
 
         // Use address if provided, otherwise generate from coordinates
         const finalAddress = address || `${clientName} (${lat}, ${lng})`;
         const normalizedAddress = finalAddress.toLowerCase().trim();
 
         // Check if location already exists
-        if (cacheData[normalizedAddress]) {
+        const existing = await collection.findOne({ _id: normalizedAddress });
+        if (existing) {
             return res.status(409).json({
                 error: 'Location already exists at this address'
             });
@@ -87,24 +98,25 @@ router.post('/', async (req, res) => {
         // Determine intelligent radius based on client type
         const intelligentRadius = radius || getIntelligentRadius(clientName, finalAddress);
 
-        // Add to cache
-        const newLocation: ClientCacheEntry = {
+        // Add to MongoDB
+        const newLocation: ClientLocationDocument = {
+            _id: normalizedAddress,
+            address: normalizedAddress,
             lat: lat,
             lng: lng,
             source: 'api',
             clientName,
             lastUpdated: new Date().toISOString(),
-            priority: isClient !== false ? 1 : 0, // Default to client priority unless explicitly marked as marker
+            priority: isClient !== false ? 1 : 0,
             radius: intelligentRadius,
-            isClient: isClient !== false, // Default to true for backwards compatibility
-            clientType: clientType || 'residential', // Default to residential if not specified
-            isActive: isActive !== false // Default to active unless explicitly marked as inactive
+            isClient: isClient !== false,
+            clientType: clientType || 'residential',
+            isActive: isActive !== false
         };
 
-        cacheData[normalizedAddress] = newLocation;
+        await collection.insertOne(newLocation);
 
-        // Save cache
-        fs.writeFileSync(CACHE_FILE_PATH, JSON.stringify(cacheData, null, 2));
+        const totalClients = await collection.countDocuments();
 
         const locationType = isClient !== false ? 'client' : 'marker';
         console.log(`✅ Added new ${locationType}: ${clientName} at ${finalAddress}`);
@@ -115,7 +127,7 @@ router.post('/', async (req, res) => {
                 address: normalizedAddress,
                 ...newLocation
             },
-            totalClients: Object.keys(cacheData).length
+            totalClients
         });
 
     } catch (error) {
@@ -130,38 +142,44 @@ router.put('/:address', async (req, res) => {
         const { address } = req.params;
         const { clientName, lat, lng, radius, isClient, clientType, isActive } = req.body;
 
-        if (!fs.existsSync(CACHE_FILE_PATH)) {
-            return res.status(404).json({ error: 'Client cache not found' });
-        }
+        const db = await getDatabase();
+        const collection = db.collection<ClientLocationDocument>('client_locations');
 
-        const cacheData: ClientCache = JSON.parse(fs.readFileSync(CACHE_FILE_PATH, 'utf8'));
         const normalizedAddress = address.toLowerCase().trim();
 
-        if (!cacheData[normalizedAddress]) {
+        const existingDoc = await collection.findOne({ _id: normalizedAddress });
+        if (!existingDoc) {
             return res.status(404).json({ error: 'Client not found' });
         }
 
-        // Update fields
-        if (clientName) cacheData[normalizedAddress].clientName = clientName;
-        if (lat) cacheData[normalizedAddress].lat = lat;
-        if (lng) cacheData[normalizedAddress].lng = lng;
-        if (radius) cacheData[normalizedAddress].radius = radius;
-        if (isClient !== undefined) {
-            cacheData[normalizedAddress].isClient = isClient;
-            cacheData[normalizedAddress].priority = isClient ? 1 : 0;
-        }
-        if (clientType !== undefined) cacheData[normalizedAddress].clientType = clientType;
-        if (isActive !== undefined) cacheData[normalizedAddress].isActive = isActive;
-        cacheData[normalizedAddress].lastUpdated = new Date().toISOString();
+        // Build update object
+        const updateFields: Partial<ClientLocationDocument> = {
+            lastUpdated: new Date().toISOString()
+        };
 
-        // Save cache
-        fs.writeFileSync(CACHE_FILE_PATH, JSON.stringify(cacheData, null, 2));
+        if (clientName) updateFields.clientName = clientName;
+        if (lat) updateFields.lat = lat;
+        if (lng) updateFields.lng = lng;
+        if (radius) updateFields.radius = radius;
+        if (isClient !== undefined) {
+            updateFields.isClient = isClient;
+            updateFields.priority = isClient ? 1 : 0;
+        }
+        if (clientType !== undefined) updateFields.clientType = clientType;
+        if (isActive !== undefined) updateFields.isActive = isActive;
+
+        await collection.updateOne(
+            { _id: normalizedAddress },
+            { $set: updateFields }
+        );
+
+        const updatedDoc = await collection.findOne({ _id: normalizedAddress });
 
         res.json({
             message: 'Client updated successfully',
             client: {
                 address: normalizedAddress,
-                ...cacheData[normalizedAddress]
+                ...updatedDoc
             }
         });
 
@@ -176,30 +194,27 @@ router.delete('/:address', async (req, res) => {
     try {
         const { address } = req.params;
 
-        if (!fs.existsSync(CACHE_FILE_PATH)) {
-            return res.status(404).json({ error: 'Client cache not found' });
-        }
+        const db = await getDatabase();
+        const collection = db.collection<ClientLocationDocument>('client_locations');
 
-        const cacheData: ClientCache = JSON.parse(fs.readFileSync(CACHE_FILE_PATH, 'utf8'));
         const normalizedAddress = address.toLowerCase().trim();
 
-        if (!cacheData[normalizedAddress]) {
+        const deletedDoc = await collection.findOne({ _id: normalizedAddress });
+        if (!deletedDoc) {
             return res.status(404).json({ error: 'Client not found' });
         }
 
-        const deletedClient = cacheData[normalizedAddress];
-        delete cacheData[normalizedAddress];
+        await collection.deleteOne({ _id: normalizedAddress });
 
-        // Save cache
-        fs.writeFileSync(CACHE_FILE_PATH, JSON.stringify(cacheData, null, 2));
+        const totalClients = await collection.countDocuments();
 
         res.json({
             message: 'Client removed successfully',
             deletedClient: {
                 address: normalizedAddress,
-                ...deletedClient
+                ...deletedDoc
             },
-            totalClients: Object.keys(cacheData).length
+            totalClients
         });
 
     } catch (error) {
