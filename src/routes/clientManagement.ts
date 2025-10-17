@@ -6,6 +6,15 @@ import * as path from 'path';
 
 const router = Router();
 
+interface SubcontractorServices {
+    irrigation?: boolean;
+    turfPlan?: boolean;
+    bedSpray?: boolean;
+    aerationOverseed?: boolean;
+    treeShrub?: boolean;
+    grubPest?: boolean;
+}
+
 interface ClientCacheEntry {
     lat: number;
     lng: number;
@@ -17,6 +26,7 @@ interface ClientCacheEntry {
     isClient?: boolean; // Optional for backwards compatibility
     clientType?: 'residential' | 'commercial'; // New field for residential vs commercial
     isActive?: boolean; // Optional field for active/inactive status
+    services?: SubcontractorServices; // Subcontractor service flags
 }
 
 interface ClientCache {
@@ -48,7 +58,8 @@ router.get('/', async (req, res) => {
             radius: doc.radius || getIntelligentRadius(doc.clientName, doc._id),
             isClient: doc.isClient !== false,
             clientType: doc.clientType || 'residential',
-            isActive: doc.isActive !== false
+            isActive: doc.isActive !== false,
+            services: doc.services || {}
         }));
 
         res.json({
@@ -64,7 +75,7 @@ router.get('/', async (req, res) => {
 // POST /api/clients - Add new client
 router.post('/', async (req, res) => {
     try {
-        const { clientName, address, lat, lng, radius, isClient, clientType, isActive } = req.body;
+        const { clientName, address, lat, lng, radius, isClient, clientType, isActive, services } = req.body;
 
         // Validation
         if (!clientName) {
@@ -109,7 +120,8 @@ router.post('/', async (req, res) => {
             radius: intelligentRadius,
             isClient: isClient !== false,
             clientType: clientType || 'residential',
-            isActive: isActive !== false
+            isActive: isActive !== false,
+            services: services || {}
         };
 
         await collection.insertOne(newLocation as any);
@@ -135,7 +147,7 @@ router.post('/', async (req, res) => {
 router.put('/:address', async (req, res) => {
     try {
         const { address } = req.params;
-        const { clientName, lat, lng, radius, isClient, clientType, isActive } = req.body;
+        const { clientName, lat, lng, radius, isClient, clientType, isActive, services } = req.body;
 
         const db = await getDatabase();
         const collection = db.collection<ClientLocationDocument>('client_locations');
@@ -162,6 +174,7 @@ router.put('/:address', async (req, res) => {
         }
         if (clientType !== undefined) updateFields.clientType = clientType;
         if (isActive !== undefined) updateFields.isActive = isActive;
+        if (services !== undefined) updateFields.services = services;
 
         await collection.updateOne(
             { _id: normalizedAddress },
@@ -212,6 +225,56 @@ router.delete('/:address', async (req, res) => {
     } catch (error) {
         console.error('Error removing client:', error);
         res.status(500).json({ error: 'Failed to remove client' });
+    }
+});
+
+// POST /api/clients/bulk-update - Bulk update multiple clients
+router.post('/bulk-update', async (req, res) => {
+    try {
+        const { addresses, updates } = req.body;
+
+        if (!addresses || !Array.isArray(addresses) || addresses.length === 0) {
+            return res.status(400).json({ error: 'addresses array is required' });
+        }
+
+        if (!updates || typeof updates !== 'object') {
+            return res.status(400).json({ error: 'updates object is required' });
+        }
+
+        const db = await getDatabase();
+        const collection = db.collection<ClientLocationDocument>('client_locations');
+
+        // Normalize addresses
+        const normalizedAddresses = addresses.map(addr => addr.toLowerCase().trim());
+
+        // Build update object
+        const updateFields: Partial<ClientLocationDocument> = {
+            lastUpdated: new Date().toISOString()
+        };
+
+        if (updates.isActive !== undefined) updateFields.isActive = updates.isActive;
+        if (updates.clientType !== undefined) updateFields.clientType = updates.clientType;
+        if (updates.services !== undefined) updateFields.services = updates.services;
+        if (updates.isClient !== undefined) {
+            updateFields.isClient = updates.isClient;
+            updateFields.priority = updates.isClient ? 1 : 0;
+        }
+
+        // Update multiple documents
+        const result = await collection.updateMany(
+            { _id: { $in: normalizedAddresses } },
+            { $set: updateFields }
+        );
+
+        res.json({
+            message: `${result.modifiedCount} locations updated successfully`,
+            modifiedCount: result.modifiedCount,
+            matchedCount: result.matchedCount
+        });
+
+    } catch (error) {
+        console.error('Error bulk updating clients:', error);
+        res.status(500).json({ error: 'Failed to bulk update clients' });
     }
 });
 
