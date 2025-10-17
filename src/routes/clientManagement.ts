@@ -24,8 +24,7 @@ interface ClientCache {
 }
 
 interface ClientLocationDocument extends ClientCacheEntry {
-    _id: string; // MongoDB uses address as _id
-    address: string;
+    _id: string; // MongoDB uses address as _id (string, not ObjectId)
 }
 
 const CACHE_FILE_PATH = path.join(__dirname, '../../client-coordinates-cache.json');
@@ -101,7 +100,6 @@ router.post('/', async (req, res) => {
         // Add to MongoDB
         const newLocation: ClientLocationDocument = {
             _id: normalizedAddress,
-            address: normalizedAddress,
             lat: lat,
             lng: lng,
             source: 'api',
@@ -114,7 +112,7 @@ router.post('/', async (req, res) => {
             isActive: isActive !== false
         };
 
-        await collection.insertOne(newLocation);
+        await collection.insertOne(newLocation as any);
 
         const totalClients = await collection.countDocuments();
 
@@ -123,10 +121,7 @@ router.post('/', async (req, res) => {
 
         res.status(201).json({
             message: `${isClient !== false ? 'Client' : 'Marker'} added successfully`,
-            client: {
-                address: normalizedAddress,
-                ...newLocation
-            },
+            client: newLocation,
             totalClients
         });
 
@@ -210,10 +205,7 @@ router.delete('/:address', async (req, res) => {
 
         res.json({
             message: 'Client removed successfully',
-            deletedClient: {
-                address: normalizedAddress,
-                ...deletedDoc
-            },
+            deletedClient: deletedDoc,
             totalClients
         });
 

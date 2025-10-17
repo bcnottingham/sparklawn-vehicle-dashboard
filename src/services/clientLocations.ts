@@ -81,7 +81,6 @@ class ClientLocationService {
                 // Migrate to MongoDB
                 const docsToInsert = Object.entries(cachedData).map(([address, data]: [string, any]) => ({
                     _id: address,
-                    address: address,
                     lat: data.lat,
                     lng: data.lng,
                     source: data.source || 'legacy',
@@ -95,14 +94,14 @@ class ClientLocationService {
                 }));
 
                 if (docsToInsert.length > 0) {
-                    await collection.insertMany(docsToInsert);
+                    await collection.insertMany(docsToInsert as any);
                     console.log(`✅ Migrated ${docsToInsert.length} locations from legacy cache to MongoDB`);
                 }
 
                 this.clientLocations = docsToInsert.map(doc => ({
                     client: doc.clientName,
                     job: 'Property Service',
-                    address: doc.address,
+                    address: doc._id,
                     lat: doc.lat,
                     lng: doc.lng,
                     radius: this.getReasonableRadius(doc.clientName, doc.radius),
