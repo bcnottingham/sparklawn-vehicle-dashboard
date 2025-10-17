@@ -18,11 +18,19 @@ class DailySlackReportScheduler {
      * Runs every day at 7:00 PM CST
      */
     async start(): Promise<void> {
-        if (!slackService.isConfigured()) {
-            console.log('⏭️ Slack not configured - daily report scheduler disabled');
-            console.log('   Set SLACK_WEBHOOK_URL in .env to enable automated Slack reports');
+        // Check if bot token is configured (required for PDF uploads)
+        if (!slackService.canUploadFiles()) {
+            console.log('⏭️ Slack bot token not configured - daily report scheduler disabled');
+            console.log('   Set SLACK_BOT_TOKEN and SLACK_CHANNEL_ID in environment variables');
+            console.log('   Current config: botToken=' + (process.env.SLACK_BOT_TOKEN ? 'SET' : 'NOT SET') +
+                       ', channelId=' + (process.env.SLACK_CHANNEL_ID || 'NOT SET'));
             return;
         }
+
+        console.log('✅ Slack configuration verified:');
+        console.log('   Bot token: ' + (process.env.SLACK_BOT_TOKEN ? 'CONFIGURED' : 'MISSING'));
+        console.log('   Channel ID: ' + (process.env.SLACK_CHANNEL_ID || 'daily-trips'));
+        console.log('   Webhook URL: ' + (process.env.SLACK_WEBHOOK_URL ? 'CONFIGURED' : 'NOT SET'));
 
         // Initialize TTL index for report locks (auto-delete after expiry)
         try {
@@ -109,6 +117,16 @@ class DailySlackReportScheduler {
                 console.log(`📄 Generating PDF report for ${reportDate}...`);
                 const pdfFilename = await pdfReportService.generateDailyReportPDF(reportDate);
                 const pdfFilePath = path.join(__dirname, '../../public/reports', pdfFilename);
+                console.log(`📄 PDF generated: ${pdfFilename}`);
+                console.log(`📄 PDF path: ${pdfFilePath}`);
+
+                // Verify PDF file exists
+                const fs = await import('fs');
+                if (!fs.existsSync(pdfFilePath)) {
+                    throw new Error(`PDF file not found at ${pdfFilePath}`);
+                }
+                const stats = fs.statSync(pdfFilePath);
+                console.log(`📄 PDF size: ${(stats.size / 1024).toFixed(2)} KB`);
 
                 // Format date for display
                 const formattedDate = moment.tz(reportDate, this.timezone).format('dddd, MMMM DD, YYYY');
@@ -116,7 +134,7 @@ class DailySlackReportScheduler {
                 // Upload PDF to Slack - title only, no summary message
                 const titleMessage = `📊 *Daily Fleet Report - ${formattedDate}*`;
 
-                console.log(`📤 Uploading PDF report to Slack...`);
+                console.log(`📤 Uploading PDF report to Slack channel: ${process.env.SLACK_CHANNEL_ID || 'daily-trips'}...`);
                 const uploaded = await slackService.uploadFile(
                     pdfFilePath,
                     titleMessage,
@@ -126,8 +144,11 @@ class DailySlackReportScheduler {
                 if (uploaded) {
                     console.log(`✅ Daily Slack report sent successfully for ${reportDate}`);
                 } else {
-                    console.error(`❌ Failed to send daily Slack report for ${reportDate}`);
+                    console.error(`❌ Failed to send daily Slack report for ${reportDate} - Slack API returned false`);
                 }
+            } catch (reportError) {
+                console.error(`❌ Error in report generation/upload for ${reportDate}:`, reportError);
+                throw reportError; // Re-throw to be caught by outer catch
             } finally {
                 // ALWAYS release lock, even if report fails
                 try {
